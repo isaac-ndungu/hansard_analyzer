@@ -32,7 +32,55 @@ Metrics computed:
 - Sentiment score (average tone of speeches)
 - Participation trend over time
 
+## Project flow
+Parliament Website
+      │
+      │  Scheduled scrape (daily/weekly)
+      ▼
+Download PDFs ──► Parse ──► Store in SQLite
+                                  │
+                                  │  Instant retrieval
+                                  ▼
+                            User runs a query
+                                  │
+                                  ▼
+                            Results displayed
 
-platforms
-GUI - Tkinter
 
+## Delivery Plan
+
+### DAY 1: 
+- Write database schema
+- Download sample pdfs and observe structure
+- Build scrape to get pdf links, download pdfs, 
+    - Implement logic to sync pdfs, (discovery and download)
+- use pdfplumber to exract data
+- validation and testing of extracted data
+
+
+### DAY 2: 
+- Write MP analytics — speech count, word count, sessions, activity over time
+- Write topic analytics — keyword map, topic classification, frequency, trending
+- Write sentiment analysis using NLTK VADER
+- Write trend analysis — topic trends, participation trends, MP leaderboard
+- Build CLI foundation with core commands using `click` and `rich`
+- Write the MP scorecard report with ASCII charts and speech excerpts
+- Write analytics unit tests and run full sync → query → scorecard flow
+
+## Day 3 
+
+- Write AI session and MP summarizer 
+- Write party report and party comparison reports
+- Write session detail report with AI summary
+- Write CSV export for speeches and analytics
+- Write the daily sync scheduler
+
+## Day 4
+
+- Write database tests using in-memory SQLite
+Run coverage report, write edge case tests to reach 80% coverage
+- Audit error handling across all modules
+- Write the README
+- Sync 10+ real Hansards and smoke-test every CLI command
+- Profile performance and add database indexes where needed
+- Add docstrings, pin requirements.txt, create .env.example
