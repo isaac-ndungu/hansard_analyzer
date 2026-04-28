@@ -11,7 +11,6 @@ from analyzer.database.queries import (
 )
 from analyzer.pipeline.parser import parse_document
 from analyzer.pipeline.normalizer import normalize
-from analyzer.analytics.topics import classify_speech_topics
 
 logger = logging.getLogger(__name__)
 
@@ -95,14 +94,13 @@ def run_pipeline(pdf_path: Path) -> int:
             word_count=speech["word_count"],
         )
 
-        topics = classify_speech_topics(speech["content"])
-
-        for topic_result in topics:
+        # Store extracted topics
+        for topic_data in speech.get("topics", []):
             insert_speech_topic(
                 conn,
                 speech_id=speech_id,
-                topic=topic_result["topic"],
-                confidence=topic_result["confidence"],
+                topic=topic_data["topic"],
+                confidence=topic_data["confidence"],
             )
 
         stored_count += 1

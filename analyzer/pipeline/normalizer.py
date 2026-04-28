@@ -1,6 +1,7 @@
 import logging
 import re
 from collections import Counter
+from config import TOPIC_MAP
 
 logger = logging.getLogger(__name__)
 
@@ -93,11 +94,48 @@ def is_valid_speech(speech: dict) -> bool:
     return True
 
 
+# Topic Extraction
+
+def extract_topics(content: str) -> list[dict]:
+    """
+    Extracts topics from speech content by matching keywords from TOPIC_MAP.
+    Returns a list of dicts with 'topic' and 'confidence' keys.
+    
+    Confidence is calculated as: (keyword_matches / total_words) * 100
+    """
+    if not content:
+        return []
+    
+    content_lower = content.lower()
+    word_count = compute_word_count(content)
+    detected = {}
+    
+    for topic, keywords in TOPIC_MAP.items():
+        match_count = 0
+        for keyword in keywords:
+            # Count word boundary matches for accuracy
+            pattern = r'\b' + re.escape(keyword.lower()) + r'\b'
+            matches = len(re.findall(pattern, content_lower))
+            match_count += matches
+        
+        if match_count > 0:
+            # Confidence: (matches / word_count) * 100, capped at 100
+            confidence = min(100, (match_count / word_count) * 100)
+            detected[topic] = round(confidence, 2)
+    
+    # Return topics sorted by confidence (highest first)
+    return [
+        {"topic": topic, "confidence": conf}
+        for topic, conf in sorted(detected.items(), key=lambda x: x[1], reverse=True)
+    ]
+
+
 # Full Normalization
 
 def normalize_speech(speech: dict) -> dict:
     """
     Applies all cleaning and standardization to a single parsed speech dict.
+    Extracts topics from the content.
     """
     return {
         "name": normalize_name(speech["name"]),
@@ -106,6 +144,7 @@ def normalize_speech(speech: dict) -> dict:
         "content": speech["content"].strip(),
         "section": speech.get("section", "UNKNOWN").upper(),
         "word_count": compute_word_count(speech["content"]),
+        "topics": extract_topics(speech["content"]),
     }
 
 
