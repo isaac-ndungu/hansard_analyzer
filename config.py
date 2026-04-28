@@ -59,14 +59,76 @@ SECTION_HEADINGS = [
 
 # Analytics Configuration
 
-TOPIC_MAP = {
-    "healthcare": ["health", "hospital", "doctor", "nurse", "SHA", "NHIF", "patient"],
-    "education": ["school", "teacher", "TSC", "university", "student", "curriculum"],
-    "infrastructure": ["road", "bridge", "water", "electricity", "KeRRA", "KURA"],
-    "security": ["police", "crime", "terror", "KDF", "security"],
-    "agriculture": ["farmer", "crop", "livestock", "drought", "food"],
-    "finance": ["budget", "tax", "debt", "KRA", "Treasury", "deficit"],
-    "environment": ["climate", "forest", "river", "pollution", "wildlife"],
+{
+    "healthcare": [
+        "health", "hospital", "doctor", "nurse", "patient", "clinic", "medicine",
+        "SHA", "NHIF", "KMTC", "malaria", "disease", "mental health", "maternal",
+        "pharmaceutical", "ambulance", "dispensary", "surgery", "treatment",
+    ],
+    "education": [
+        "school", "teacher", "TSC", "university", "student", "curriculum",
+        "TVET", "college", "bursary", "tuition", "CBC", "exam", "KNEC",
+        "primary", "secondary", "polytechnic", "literacy", "scholarship",
+    ],
+    "infrastructure": [
+        "road", "bridge", "KeRRA", "KURA", "KENHA", "railway", "airport",
+        "port", "construction", "tarmac", "internet", "broadband",
+        "fibre", "housing", "estate", "affordable housing",
+    ],
+    "water": [
+        "water", "dam", "river", "borehole", "irrigation", "rainfall",
+        "WRUA", "sewerage", "pipeline", "abstraction", "catchment",
+        "reservoir", "flood", "sanitation", "WASH",
+    ],
+    "security": [
+        "police", "crime", "terror", "KDF", "security", "bandit", "raid",
+        "gun", "arms", "Al-Shabaab", "DCI", "NIS", "GSU", "NYS",
+        "kidnap", "abduction", "femicide", "robbery", "extrajudicial",
+    ],
+    "agriculture": [
+        "farmer", "crop", "livestock", "food", "fertiliser", "subsidy",
+        "maize", "wheat", "coffee", "tea", "sugar", "milk", "dairy",
+        "NCPB", "ADC", "KDB", "harvest", "famine", "hunger", "drought",
+    ],
+    "finance": [
+        "budget", "tax", "debt", "KRA", "Treasury", "deficit", "revenue",
+        "loan", "IMF", "World Bank", "borrowing", "expenditure", "fiscal",
+        "VAT", "excise", "inflation", "shilling", "forex", "eurobond",
+    ],
+    "environment": [
+        "climate", "forest", "pollution", "wildlife", "conservation",
+        "carbon", "emission", "NEMA", "KWS", "deforestation", "Mau",
+        "green", "plastic", "waste", "ocean", "coral",
+    ],
+    "land": [
+        "land", "title deed", "eviction", "NLC", "survey", "adjudication",
+        "squatter", "settlement", "acreage", "lease", "compulsory acquisition",
+        "encroachment", "boundary", "community land",
+    ],
+    "devolution": [
+        "county", "governor", "CEC", "devolution", "ward", "MCA",
+        "equitable share", "OCOB", "intergovernmental", "transfer",
+        "CRA", "service delivery", "county government",
+    ],
+    "energy": [
+        "electricity", "power", "KPLC", "KenGen", "EPRA", "REA",
+        "solar", "geothermal", "wind", "oil", "petroleum", "gas",
+        "fuel", "kerosene", "blackout", "generation", "transmission",
+    ],
+    "fisheries": [
+        "fish", "fishing", "fishermen", "lake", "ocean", "aquaculture",
+        "tilapia", "omena", "trawler", "BMU", "landing site", "cage",
+        "blue economy", "marine", "coastline", "fingerling",
+    ],
+    "gender": [
+        "women", "gender", "girl", "female", "GBV", "femicide",
+        "two-thirds", "affirmative action", "sexual violence", "FGM",
+        "maternity", "menstrual", "sanitary",
+    ],
+    "youth": [
+        "youth", "young people", "unemployment", "intern", "NYS",
+        "graduate", "HELB", "startup", "NITA",
+    ],
 }
 
 
