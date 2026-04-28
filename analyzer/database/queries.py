@@ -5,22 +5,54 @@ from typing import Optional
 
 # Session Queries
 
-def insert_session(conn: sqlite3.Connection, date: str, chamber: str, volume: Optional[int], issue: Optional[int], pdf_path: str) -> int:
+def insert_session(
+    conn: sqlite3.Connection,
+    date: str,
+    chamber: str,
+    parliament_number: Optional[int],
+    volume: Optional[int],
+    issue: Optional[int],
+    session_time: Optional[str],
+    pdf_path: str,
+) -> int:
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT INTO sessions (date, chamber, volume, issue, pdf_path, parsed_at)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO sessions
+            (date, chamber, parliament_number, volume, issue, session_time, pdf_path, parsed_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (date, chamber, volume, issue, pdf_path, datetime.utcnow().isoformat()),
+        (
+            date,
+            chamber,
+            parliament_number,
+            volume,
+            issue,
+            session_time,
+            pdf_path,
+            datetime.utcnow().isoformat(),
+        ),
     )
     conn.commit()
     return cursor.lastrowid
 
 
-def get_session_by_date(conn: sqlite3.Connection, date: str) -> Optional[dict]:
+def get_session_by_date_and_time(
+    conn: sqlite3.Connection,
+    date: str,
+    session_time: Optional[str],
+) -> Optional[dict]:
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM sessions WHERE date = ?", (date,))
+    if session_time is None:
+        cursor.execute(
+            "SELECT * FROM sessions WHERE date = ? AND session_time IS NULL",
+            (date,),
+        )
+    else:
+        cursor.execute(
+            "SELECT * FROM sessions WHERE date = ? AND session_time = ?",
+            (date, session_time),
+        )
     row = cursor.fetchone()
     if row is None:
         return None

@@ -2,17 +2,19 @@ import sqlite3
 from pathlib import Path
 
 
-#  Table Definitions 
+# Table Definitions
 
 SESSIONS_TABLE = """
 CREATE TABLE IF NOT EXISTS sessions (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    date       TEXT NOT NULL,
-    chamber    TEXT NOT NULL,
-    volume     INTEGER,
-    issue      INTEGER,
-    pdf_path   TEXT,
-    parsed_at  TEXT
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    date              TEXT NOT NULL,
+    chamber           TEXT NOT NULL,
+    parliament_number INTEGER,
+    volume            INTEGER,
+    issue             INTEGER,
+    session_time      TEXT,
+    pdf_path          TEXT,
+    parsed_at         TEXT
 );
 """
 
@@ -59,7 +61,7 @@ CREATE TABLE IF NOT EXISTS tracked_topics (
 """
 
 
-#  Index Definitions 
+# Index Definitions
 
 INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_speeches_member  ON speeches(member_id);",

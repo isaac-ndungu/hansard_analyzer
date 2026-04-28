@@ -8,18 +8,29 @@ logger = logging.getLogger(__name__)
 # Known Party Name Variants
 
 PARTY_ALIASES = {
+
     "uda": "UDA",
     "u.d.a": "UDA",
     "u.d.a.": "UDA",
+
     "odm": "ODM",
     "o.d.m": "ODM",
     "o.d.m.": "ODM",
+    "jp": "JP",
+    "kanu": "KANU",
+    "kup": "KUP",
+    "udm": "UDM",
+    "mdg": "MDG",
+    "wdm": "WDM",
+    "gddp": "GDDP",
+    "ccm": "CCM",
+    "dp": "DP",
+
     "jubilee": "Jubilee",
     "wiper": "Wiper",
     "amani": "Amani",
     "ford kenya": "Ford Kenya",
     "ford-kenya": "Ford Kenya",
-    "dp": "DP",
     "independent": "Independent",
 }
 
