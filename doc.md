@@ -19,7 +19,7 @@ The Kenya Hansard Analyzer solves this by building an automated pipeline that:
 5. Reports findings through a CLI interface with export capabilities
 The platform operates entirely offline after initial data ingestion, making it accessible in low-connectivity environments.
  
-##  Analytics (`analytics/mp_stats.py`)
+##  Analytics
  
 Computes participation metrics for each MP across all sessions.
  
