@@ -6,15 +6,17 @@ from analyzer.database.queries import (
     insert_session,
     get_or_create_member,
     insert_speech,
+    insert_speech_topic,
     get_session_by_date_and_time,
 )
 from analyzer.pipeline.parser import parse_document
 from analyzer.pipeline.normalizer import normalize
+from analyzer.analytics.topics import classify_speech_topics
 
 logger = logging.getLogger(__name__)
 
 
-#  Pipeline Orchestration 
+# Pipeline Orchestration
 
 def run_pipeline(pdf_path: Path) -> int:
     """
@@ -24,7 +26,7 @@ def run_pipeline(pdf_path: Path) -> int:
       1. Parse the PDF into structured data
       2. Normalize and validate all speech records
       3. Check for an existing session with the same date and session_time
-      4. Store the session, members, and speeches to the database
+      4. Store the session, members, speeches, and speech topics to the database
 
     Returns the number of speeches stored, or 0 if the document was skipped.
     """
@@ -84,7 +86,7 @@ def run_pipeline(pdf_path: Path) -> int:
             party=speech["party"],
         )
 
-        insert_speech(
+        speech_id = insert_speech(
             conn,
             session_id=session_id,
             member_id=member_id,
@@ -92,6 +94,16 @@ def run_pipeline(pdf_path: Path) -> int:
             content=speech["content"],
             word_count=speech["word_count"],
         )
+
+        topics = classify_speech_topics(speech["content"])
+
+        for topic_result in topics:
+            insert_speech_topic(
+                conn,
+                speech_id=speech_id,
+                topic=topic_result["topic"],
+                confidence=topic_result["confidence"],
+            )
 
         stored_count += 1
 

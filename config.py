@@ -59,7 +59,7 @@ SECTION_HEADINGS = [
 
 # Analytics Configuration
 
-{
+TOPIC_MAP ={
     "healthcare": [
         "health", "hospital", "doctor", "nurse", "patient", "clinic", "medicine",
         "SHA", "NHIF", "KMTC", "malaria", "disease", "mental health", "maternal",
