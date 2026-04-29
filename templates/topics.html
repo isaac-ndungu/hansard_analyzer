@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Topics — Hansard Analyzer{% endblock %}
+
+{% block content %}
+
+<div class="mb-4">
+    <h2 class="fw-semibold mb-1">Topics</h2>
+    <p class="text-muted mb-0">How Parliament has debated Kenya's most important issues</p>
+</div>
+
+{% if topics %}
+<div class="row g-3">
+    {% for item in topics %}
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <a href="{{ url_for('topics.topic_detail', topic_name=item.topic) }}"
+           class="topic-card d-block border rounded p-3 text-decoration-none h-100">
+            <div class="fw-semibold text-capitalize mb-1">{{ item.topic }}</div>
+            <div class="text-muted small">
+                {{ item.count }} speech{{ 'es' if item.count != 1 else '' }}
+            </div>
+            {% if item.count > 0 %}
+            <div class="mt-2">
+                <div class="progress" style="height: 4px;">
+                    {% set max_count = topics[0].count if topics[0].count > 0 else 1 %}
+                    <div
+                        class="progress-bar bg-success"
+                        style="width: {{ (item.count / max_count * 100)|int }}%"
+                    ></div>
+                </div>
+            </div>
+            {% endif %}
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-light border text-muted">
+    No topic data yet. Run <code>flask sync</code> to ingest Hansard data.
+</div>
+{% endif %}
+
+{% endblock %}

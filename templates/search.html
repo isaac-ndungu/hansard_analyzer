@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if query %}Search: {{ query }}{% else %}Search{% endif %} — Hansard Analyzer
+{% endblock %}
+
+{% block content %}
+
+<div class="mb-4">
+    <h2 class="fw-semibold mb-3">Search the Hansard</h2>
+
+    <form action="{{ url_for('search.search') }}" method="get">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-6">
+                <div class="input-group">
+                    <input
+                        type="text"
+                        name="q"
+                        class="form-control"
+                        placeholder="Search speeches..."
+                        value="{{ query }}"
+                    />
+                    <button class="btn btn-success" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-6 col-md-2">
+                <input type="date" name="from_date" class="form-control" value="{{ from_date }}" placeholder="From" />
+            </div>
+            <div class="col-6 col-md-2">
+                <input type="date" name="to_date" class="form-control" value="{{ to_date }}" placeholder="To" />
+            </div>
+        </div>
+    </form>
+</div>
+
+{% if query %}
+    <p class="text-muted mb-4">
+        {% if total > 0 %}
+            <strong>{{ total }}</strong> speech{{ 'es' if total != 1 else '' }} found for
+            <strong>"{{ query }}"</strong>
+        {% else %}
+            No speeches found for <strong>"{{ query }}"</strong>.
+            Try a different keyword.
+        {% endif %}
+    </p>
+
+    {% if results %}
+    <div class="search-results">
+        {% for result in results %}
+        <div class="border rounded p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                <div>
+                    <a href="{{ url_for('members.mp_scorecard', member_id=result.member_id) }}"
+                       class="fw-medium text-decoration-none">
+                        {{ result.member_name }}
+                    </a>
+                    <span class="text-muted small ms-2">{{ result.constituency }}</span>
+                    <span class="badge bg-light text-dark border small ms-1">{{ result.party }}</span>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="text-muted small">{{ result.date }}</span>
+                    <span class="badge bg-light text-dark border small text-capitalize">
+                        {{ result.section.lower() if result.section else '' }}
+                    </span>
+                    <a href="{{ url_for('sessions.session_detail', session_id=result.session_id) }}"
+                       class="btn btn-sm btn-outline-secondary py-0">
+                        Session <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+            <p class="mb-0 text-secondary search-excerpt">
+                {{ result.content[:400] }}{% if result.content|length > 400 %}…{% endif %}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+{% else %}
+    <!-- Suggested searches when no query submitted -->
+    <div class="mt-4">
+        <p class="text-muted small fw-semibold text-uppercase letter-spacing mb-3">Suggested searches</p>
+        <div class="d-flex flex-wrap gap-2">
+            {% for suggestion in ['healthcare', 'roads', 'budget', 'education', 'water', 'corruption', 'housing', 'teachers'] %}
+            <a href="{{ url_for('search.search', q=suggestion) }}"
+               class="badge bg-light text-dark border text-decoration-none fs-6 py-2 px-3">
+                {{ suggestion }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{% if query and results %}
+<script>
+// Highlight search keyword in excerpts
+const keyword = {{ query | tojson }};
+const excerpts = document.querySelectorAll(".search-excerpt");
+excerpts.forEach(el => {
+    const regex = new RegExp(`(${keyword})`, "gi");
+    el.innerHTML = el.textContent.replace(
+        regex,
+        '<mark class="bg-warning px-0">$1</mark>'
+    );
+});
+</script>
+{% endif %}
+{% endblock %}
