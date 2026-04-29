@@ -1,0 +1,56 @@
+from flask import Blueprint, render_template, abort
+from analyzer.database.seed import get_connection
+from analyzer.database.queries import get_all_members
+from analyzer.analytics.mp_stats import get_mp_full_profile
+from analyzer.analytics.sentiment import get_mp_sentiment_profile, score_label
+from analyzer.analytics.topics import get_mp_topics
+from analyzer.analytics.trends import get_participation_trend
+from config import DB_PATH
+
+members_bp = Blueprint("members", __name__)
+
+
+@members_bp.route("/")
+def mp_list():
+    """Lists all MPs in the database with their speech counts."""
+    try:
+        conn = get_connection()
+        members = get_all_members(conn)
+        conn.close()
+
+        # Attach speech count to each member
+        from analyzer.analytics.mp_stats import get_mp_speech_count, get_mp_word_count
+        for member in members:
+            member["speech_count"] = get_mp_speech_count(member["id"], DB_PATH)
+            member["word_count"] = get_mp_word_count(member["id"], DB_PATH)
+
+    except Exception:
+        members = []
+
+    return render_template("members.html", members=members)
+
+
+@members_bp.route("/<int:member_id>")
+def mp_scorecard(member_id):
+    """Full MP scorecard page with participation metrics and sentiment."""
+    profile = get_mp_full_profile(member_id, DB_PATH)
+
+    if not profile:
+        abort(404)
+
+    sentiment = get_mp_sentiment_profile(member_id, DB_PATH)
+    topics = get_mp_topics(member_id, DB_PATH)
+    activity = get_participation_trend(member_id, DB_PATH)
+
+    # Prepare Chart.js data
+    chart_labels = [row["month"] for row in activity]
+    chart_data = [row["count"] for row in activity]
+
+    return render_template(
+        "member.html",
+        profile=profile,
+        sentiment=sentiment,
+        topics=topics[:8],
+        chart_labels=chart_labels,
+        chart_data=chart_data,
+    )

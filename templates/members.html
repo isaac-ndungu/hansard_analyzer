@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Members of Parliament — Hansard Analyzer{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-semibold mb-1">Members of Parliament</h2>
+        <p class="text-muted mb-0">{{ members|length }} members in the database</p>
+    </div>
+</div>
+
+<!-- Client-side filter -->
+<div class="mb-3">
+    <input
+        type="text"
+        id="mpFilter"
+        class="form-control"
+        placeholder="Filter by name, constituency or party..."
+        onkeyup="filterTable()"
+    />
+</div>
+
+{% if members %}
+<div class="table-responsive">
+    <table class="table table-hover align-middle" id="mpTable">
+        <thead class="table-light">
+            <tr>
+                <th>Name</th>
+                <th>Constituency</th>
+                <th>Party</th>
+                <th class="text-end">Speeches</th>
+                <th class="text-end">Words</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in members %}
+            <tr>
+                <td class="fw-medium">{{ member.name }}</td>
+                <td class="text-muted">{{ member.constituency or '—' }}</td>
+                <td>
+                    <span class="badge bg-light text-dark border">
+                        {{ member.party or '—' }}
+                    </span>
+                </td>
+                <td class="text-end">{{ member.speech_count }}</td>
+                <td class="text-end text-muted">{{ "{:,}".format(member.word_count) }}</td>
+                <td class="text-end">
+                    <a href="{{ url_for('members.mp_scorecard', member_id=member.id) }}"
+                       class="btn btn-sm btn-outline-secondary">
+                        View record <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-light border text-muted">
+    No members in the database yet. Run <code>flask sync</code> to ingest Hansard data.
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterTable() {
+    const input = document.getElementById("mpFilter").value.toLowerCase();
+    const rows = document.querySelectorAll("#mpTable tbody tr");
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(input) ? "" : "none";
+    });
+}
+</script>
+{% endblock %}
