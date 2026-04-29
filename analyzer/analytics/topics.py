@@ -1,8 +1,9 @@
 import re
 import logging
+import sqlite3
 from collections import defaultdict
 
-from config import TOPIC_MAP
+from config import TOPIC_MAP, DB_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -95,11 +96,12 @@ def get_topic_frequency(
 
 # MP Topic Profile
 
-def get_mp_topics(conn, member_id: int) -> list[dict]:
+def get_mp_topics(member_id: int, db_path=DB_PATH) -> list[dict]:
     """
     Returns all topics associated with a given member's speeches,
     ordered by frequency of appearance.
     """
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -113,7 +115,9 @@ def get_mp_topics(conn, member_id: int) -> list[dict]:
         (member_id,),
     )
     columns = [d[0] for d in cursor.description]
-    return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    result = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    conn.close()
+    return result
 
 
 # Trending Topics
