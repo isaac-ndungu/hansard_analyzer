@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}{{ session.date }} — Hansard Analyzer{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('sessions.session_list') }}" class="text-muted text-decoration-none">Sessions</a>
+        </li>
+        <li class="breadcrumb-item active">{{ session.date }}</li>
+    </ol>
+</nav>
+
+<!-- Session header -->
+<div class="mb-4">
+    <h2 class="fw-semibold mb-1">{{ session.date }}</h2>
+    <p class="text-muted mb-0">
+        {{ session.chamber }}
+        {% if session.volume %}&nbsp;&middot;&nbsp;Vol. {{ session.volume }}{% endif %}
+        {% if session.issue %}&nbsp;&middot;&nbsp;No. {{ session.issue }}{% endif %}
+        {% if session.parliament_number %}&nbsp;&middot;&nbsp;{{ session.parliament_number }}th Parliament{% endif %}
+    </p>
+</div>
+
+<!-- Stats row -->
+<div class="row g-3 mb-4">
+    <div class="col-4">
+        <div class="border rounded p-3 text-center">
+            <div class="fs-4 fw-semibold text-success">{{ total_speakers }}</div>
+            <div class="text-muted small">Speakers</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="border rounded p-3 text-center">
+            <div class="fs-4 fw-semibold text-success">{{ speeches|length }}</div>
+            <div class="text-muted small">Speeches</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="border rounded p-3 text-center">
+            <div class="fs-4 fw-semibold text-success">{{ "{:,}".format(total_words) }}</div>
+            <div class="text-muted small">Words</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+
+    <!-- Sections covered -->
+    <div class="col-12 col-md-6">
+        <h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
+            Sections Covered
+        </h6>
+        <div class="d-flex flex-wrap gap-2">
+            {% for section in sections %}
+            <span class="badge bg-light text-dark border text-capitalize">
+                {{ section.lower() }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Top speakers -->
+    <div class="col-12 col-md-6">
+        <h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
+            Most Active Speakers
+        </h6>
+        <ul class="list-group list-group-flush">
+            {% for speaker in top_speakers %}
+            <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                <a href="{{ url_for('members.mp_list') }}" class="text-decoration-none">
+                    {{ speaker.name }}
+                </a>
+                <span class="text-muted small">{{ speaker.count }} speech{{ 'es' if speaker.count != 1 else '' }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+</div>
+
+<!-- Full speech log -->
+<h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
+    Full Speech Log
+</h6>
+
+{% if speeches %}
+<div class="speech-log">
+    {% for speech in speeches %}
+    <div class="speech-entry border-bottom py-3">
+        <div class="d-flex justify-content-between align-items-start mb-1 flex-wrap gap-2">
+            <div>
+                <a href="{{ url_for('members.mp_scorecard', member_id=speech.member_id) }}"
+                   class="fw-medium text-decoration-none">
+                    {{ speech.member_name }}
+                </a>
+                <span class="text-muted small ms-2">{{ speech.constituency }}</span>
+                <span class="badge bg-light text-dark border small ms-1">{{ speech.party }}</span>
+            </div>
+            <span class="badge bg-light text-dark border small text-capitalize">
+                {{ speech.section.lower() if speech.section else '' }}
+            </span>
+        </div>
+        <p class="mb-0 text-secondary speech-content">{{ speech.content }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="text-muted">No speeches found for this session.</p>
+{% endif %}
+
+{% endblock %}
