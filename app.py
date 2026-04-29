@@ -9,13 +9,13 @@ from analyzer.pipeline.pipeline import run_pipeline
 def create_app():
     app = Flask(__name__)
 
-    # Load config
+    #  Load config ─
     app.config["SECRET_KEY"] = "dev-secret-key-change-in-production"
 
     from config import DB_PATH
     app.config["DB_PATH"] = str(DB_PATH)
 
-    # Register blueprints
+    #  Register blueprints ─
     from routes.home import home_bp
     from routes.members import members_bp
     from routes.sessions import sessions_bp
@@ -28,14 +28,15 @@ def create_app():
     app.register_blueprint(search_bp, url_prefix="/search")
     app.register_blueprint(topics_bp, url_prefix="/topics")
 
-    # Register Flask CLI commands
+    #  Register Flask CLI commands ─
     app.cli.add_command(cmd_init_db)
     app.cli.add_command(cmd_sync)
     app.cli.add_command(cmd_update_sentiments)
 
     return app
 
-# Flask CLI Commands
+
+#  Flask CLI Commands ─
 
 @click.command("init-db")
 def cmd_init_db():
@@ -65,7 +66,7 @@ def cmd_update_sentiments():
     click.echo(f"Updated sentiment for {count} speeches.")
 
 
-# Entry point
+#  Entry point 
 
 if __name__ == "__main__":
     app = create_app()

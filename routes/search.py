@@ -1,86 +1,67 @@
-from flask import Blueprint, render_template, abort
+from flask import Blueprint, render_template, request
 from analyzer.database.seed import get_connection
-from analyzer.analytics.trends import get_all_sessions_list
-from config import DB_PATH
+from analyzer.database.queries import search_speeches
 
-sessions_bp = Blueprint("sessions", __name__)
-
-
-@sessions_bp.route("/")
-def session_list():
-    """Lists all sessions ordered by most recent first."""
-    try:
-        sessions = get_all_sessions_list(DB_PATH)
-    except Exception:
-        sessions = []
-
-    return render_template("sessions.html", sessions=sessions)
+search_bp = Blueprint("search", __name__)
 
 
-@sessions_bp.route("/<int:session_id>")
-def session_detail(session_id):
-    """Full session detail — metadata, top speakers, and complete speech log."""
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
+@search_bp.route("/")
+def search():
+    """Keyword search across all speeches with optional date filtering."""
+    query = request.args.get("q", "").strip()
+    from_date = request.args.get("from_date", "").strip() or None
+    to_date = request.args.get("to_date", "").strip() or None
 
-        # Session metadata
-        cursor.execute("SELECT * FROM sessions WHERE id = ?", (session_id,))
-        row = cursor.fetchone()
-        if row is None:
-            conn.close()
-            abort(404)
-        columns = [d[0] for d in cursor.description]
-        session = dict(zip(columns, row))
+    results = []
+    total = 0
 
-        # All speeches in this session with member info
-        cursor.execute(
+    if query:
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+
+            sql = """
+                SELECT
+                    sp.id,
+                    sp.content,
+                    sp.word_count,
+                    sp.section,
+                    se.id   AS session_id,
+                    se.date,
+                    m.id    AS member_id,
+                    m.name  AS member_name,
+                    m.constituency,
+                    m.party
+                FROM speeches sp
+                JOIN sessions se ON sp.session_id = se.id
+                JOIN members  m  ON sp.member_id  = m.id
+                WHERE sp.content LIKE ?
             """
-            SELECT
-                sp.id,
-                sp.content,
-                sp.word_count,
-                sp.section,
-                sp.sentiment_score,
-                m.id   AS member_id,
-                m.name AS member_name,
-                m.constituency,
-                m.party
-            FROM speeches sp
-            JOIN members m ON sp.member_id = m.id
-            WHERE sp.session_id = ?
-            ORDER BY sp.id ASC
-            """,
-            (session_id,),
-        )
-        cols = [d[0] for d in cursor.description]
-        speeches = [dict(zip(cols, r)) for r in cursor.fetchall()]
+            params = [f"%{query}%"]
 
-        # Top speakers — aggregate by member
-        from collections import Counter
-        speaker_counts = Counter(s["member_name"] for s in speeches)
-        top_speakers = [
-            {"name": name, "count": count}
-            for name, count in speaker_counts.most_common(10)
-        ]
+            if from_date:
+                sql += " AND se.date >= ?"
+                params.append(from_date)
+            if to_date:
+                sql += " AND se.date <= ?"
+                params.append(to_date)
 
-        # Unique sections covered
-        sections = sorted(set(s["section"] for s in speeches if s["section"]))
+            sql += " ORDER BY se.date DESC"
 
-        # Summary stats
-        total_words = sum(s["word_count"] or 0 for s in speeches)
+            cursor.execute(sql, params)
+            cols = [d[0] for d in cursor.description]
+            results = [dict(zip(cols, row)) for row in cursor.fetchall()]
+            total = len(results)
+            conn.close()
 
-        conn.close()
-
-    except Exception as exc:
-        abort(500)
+        except Exception:
+            results = []
 
     return render_template(
-        "session.html",
-        session=session,
-        speeches=speeches,
-        top_speakers=top_speakers,
-        sections=sections,
-        total_words=total_words,
-        total_speakers=len(speaker_counts),
+        "search.html",
+        query=query,
+        results=results,
+        total=total,
+        from_date=from_date or "",
+        to_date=to_date or "",
     )
