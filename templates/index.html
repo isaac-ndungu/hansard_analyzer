@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Kenya Hansard Analyzer — Search Parliament{% endblock %}
+
+{% block content %}
+
+<!-- Hero Search Section -->
+<div class="hero-section text-center py-5 mb-5">
+    <h1 class="display-5 fw-semibold mb-2">Kenya Hansard Analyzer</h1>
+    <p class="text-muted mb-4 fs-5">
+        Search every word spoken in Kenya's National Assembly
+    </p>
+
+    <form action="{{ url_for('search.search') }}" method="get" class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="input-group input-group-lg shadow-sm">
+                <input
+                    type="text"
+                    name="q"
+                    class="form-control border-end-0"
+                    placeholder="Search speeches, MPs, topics..."
+                    autofocus
+                />
+                <button class="btn btn-success px-4" type="submit">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Browse Links -->
+<div class="row text-center mb-5 g-3">
+    <div class="col-12 col-md-4">
+        <a href="{{ url_for('members.mp_list') }}" class="browse-card d-block p-4 rounded border text-decoration-none">
+            <i class="bi bi-people fs-3 text-success d-block mb-2"></i>
+            <span class="fw-semibold">Browse MPs</span>
+            <p class="text-muted small mb-0 mt-1">Search participation records for every Member of Parliament</p>
+        </a>
+    </div>
+    <div class="col-12 col-md-4">
+        <a href="{{ url_for('sessions.session_list') }}" class="browse-card d-block p-4 rounded border text-decoration-none">
+            <i class="bi bi-calendar3 fs-3 text-success d-block mb-2"></i>
+            <span class="fw-semibold">Browse Sessions</span>
+            <p class="text-muted small mb-0 mt-1">Read full transcripts from every sitting of the National Assembly</p>
+        </a>
+    </div>
+    <div class="col-12 col-md-4">
+        <a href="{{ url_for('topics.topics_overview') }}" class="browse-card d-block p-4 rounded border text-decoration-none">
+            <i class="bi bi-tags fs-3 text-success d-block mb-2"></i>
+            <span class="fw-semibold">Browse Topics</span>
+            <p class="text-muted small mb-0 mt-1">Explore how Parliament has debated healthcare, finance, education and more</p>
+        </a>
+    </div>
+</div>
+
+<!-- Latest Sessions + Trending Topics -->
+<div class="row g-4">
+
+    <!-- Latest Sessions -->
+    <div class="col-12 col-md-6">
+        <h6 class="text-uppercase text-muted fw-semibold letter-spacing mb-3">
+            <i class="bi bi-clock-history me-2"></i>Latest Sessions
+        </h6>
+        {% if recent_sessions %}
+            <ul class="list-group list-group-flush">
+                {% for session in recent_sessions %}
+                <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{{ url_for('sessions.session_detail', session_id=session.id) }}"
+                           class="text-decoration-none fw-medium">
+                            {{ session.date }}
+                        </a>
+                        <span class="text-muted small ms-2">
+                            Vol. {{ session.volume or '—' }} No. {{ session.issue or '—' }}
+                        </span>
+                    </div>
+                    <i class="bi bi-arrow-right text-muted"></i>
+                </li>
+                {% endfor %}
+            </ul>
+            <a href="{{ url_for('sessions.session_list') }}" class="small text-muted mt-2 d-inline-block">
+                View all sessions →
+            </a>
+        {% else %}
+            <p class="text-muted small">No sessions in database yet. Run <code>flask sync</code> to get started.</p>
+        {% endif %}
+    </div>
+
+    <!-- Trending Topics -->
+    <div class="col-12 col-md-6">
+        <h6 class="text-uppercase text-muted fw-semibold letter-spacing mb-3">
+            <i class="bi bi-graph-up me-2"></i>Trending Topics
+        </h6>
+        {% if trending_topics %}
+            <ul class="list-group list-group-flush">
+                {% for item in trending_topics[:5] %}
+                <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                    <a href="{{ url_for('topics.topic_detail', topic_name=item.topic) }}"
+                       class="text-decoration-none fw-medium text-capitalize">
+                        {{ item.topic }}
+                    </a>
+                    <span class="badge bg-light text-dark border">
+                        {{ item.speech_count }} speeches
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+            <a href="{{ url_for('topics.topics_overview') }}" class="small text-muted mt-2 d-inline-block">
+                View all topics →
+            </a>
+        {% else %}
+            <p class="text-muted small">No topic data yet. Run <code>flask sync</code> to get started.</p>
+        {% endif %}
+    </div>
+
+</div>
+
+{% endblock %}

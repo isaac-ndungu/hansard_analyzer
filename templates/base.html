@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Kenya Hansard Analyzer{% endblock %}</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['DM Sans', 'sans-serif'],
+                        serif: ['Spectral', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50:  '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'DM Sans', sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Spectral', serif; }
+        .speech-content { line-height: 1.75; }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+
+<!-- Navbar -->
+<nav class="bg-gray-900 border-b border-gray-700 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-14">
+
+            <!-- Brand -->
+            <a href="{{ url_for('home.index') }}"
+               class="text-white font-serif font-semibold text-lg tracking-tight flex items-center gap-2 hover:text-green-400 transition-colors">
+                <span class="text-green-500">⬡</span>
+                Hansard Analyzer
+            </a>
+
+            <!-- Nav links -->
+            <div class="hidden sm:flex items-center gap-6 text-sm text-gray-300">
+                <!-- <a href="{{ url_for('members.mp_list') }}" -->
+                   class="hover:text-white transition-colors">MPs</a>
+                <a href="{{ url_for('sessions.session_list') }}"
+                   class="hover:text-white transition-colors">Sessions</a>
+                <a href="{{ url_for('topics.topics_overview') }}"
+                   class="hover:text-white transition-colors">Topics</a>
+                <a href="{{ url_for('search.search') }}"
+                   class="hover:text-white transition-colors">Search</a>
+                <span class="bg-green-800 text-green-100 text-xs font-medium px-2 py-0.5 rounded-full">
+                    Kenya Parliament
+                </span>
+            </div>
+
+            <!-- Mobile menu button -->
+            <button
+                class="sm:hidden text-gray-300 hover:text-white"
+                onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Mobile nav -->
+        <div id="mobile-menu" class="hidden sm:hidden pb-3 text-sm text-gray-300 space-y-2">
+            <!-- <a href="{{ url_for('members.mp_list') }}" class="block hover:text-white py-1">MPs</a> -->
+            <a href="{{ url_for('sessions.session_list') }}" class="block hover:text-white py-1">Sessions</a>
+            <a href="{{ url_for('topics.topics_overview') }}" class="block hover:text-white py-1">Topics</a>
+            <a href="{{ url_for('search.search') }}" class="block hover:text-white py-1">Search</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Page content -->
+<main class="flex-1 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% block content %}{% endblock %}
+    </div>
+</main>
+
+<!-- Footer -->
+<footer class="border-t border-gray-200 mt-12 py-6 text-center text-sm text-gray-400">
+    <div class="max-w-6xl mx-auto px-4">
+        Data sourced from
+        <a href="https://parliament.go.ke" target="_blank"
+           class="underline hover:text-gray-600 transition-colors">parliament.go.ke</a>
+        &nbsp;&middot;&nbsp;
+        Open source civic technology
+        &nbsp;&middot;&nbsp;
+        <a href="{{ url_for('search.search') }}"
+           class="underline hover:text-gray-600 transition-colors">Search the Hansard</a>
+    </div>
+</footer>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>
