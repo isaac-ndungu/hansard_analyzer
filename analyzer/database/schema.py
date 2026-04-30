@@ -61,6 +61,17 @@ CREATE TABLE IF NOT EXISTS tracked_topics (
 );
 """
 
+AI_SUMMARIES_TABLE = """
+CREATE TABLE IF NOT EXISTS ai_summaries (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    entity_type  TEXT NOT NULL,
+    entity_id    INTEGER NOT NULL,
+    summary      TEXT NOT NULL,
+    generated_at TEXT NOT NULL,
+    UNIQUE(entity_type, entity_id)
+);
+"""
+
 
 # Index Definitions
 
@@ -81,6 +92,7 @@ def create_tables(conn: sqlite3.Connection) -> None:
         SPEECHES_TABLE,
         SPEECH_TOPICS_TABLE,
         TRACKED_TOPICS_TABLE,
+        AI_SUMMARIES_TABLE
     ]
 
     for table_sql in tables:
