@@ -2,6 +2,10 @@ from flask import Blueprint, render_template, abort
 
 from analyzer.database.seed import get_connection
 from analyzer.analytics.trends import get_all_sessions_list
+from flask import jsonify
+from analyzer.ai.cache import get_cached_summary, save_summary
+from analyzer.ai.summarizer import summarize_session
+from config import DB_PATH
 
 sessions_bp = Blueprint("sessions", __name__)
 
@@ -9,7 +13,7 @@ sessions_bp = Blueprint("sessions", __name__)
 @sessions_bp.route("/")
 def session_list():
     sessions = get_all_sessions_list()
-    return render_template("session_list.html", sessions=sessions)
+    return render_template("sessions.html", sessions=sessions)
 
 
 @sessions_bp.route("/<int:session_id>")
@@ -86,3 +90,23 @@ def session_detail(session_id):
         sections=sections,
         agenda_items=agenda_items,
     )
+
+
+@sessions_bp.route("/<int:session_id>/summary", methods=["POST"])
+def session_summary(session_id):
+    """
+    Generates or retrieves a cached AI summary for a session.
+    Called via fetch() from the session detail page.
+    Returns JSON: {summary: str, cached: bool}
+    """
+    
+
+    cached = get_cached_summary("session", session_id, DB_PATH)
+    if cached:
+        return jsonify({"summary": cached["summary"], "cached": True})
+
+    summary = summarize_session(session_id, DB_PATH)
+    if summary and summary != "Summary could not be generated.":
+        save_summary("session", session_id, summary, DB_PATH)
+
+    return jsonify({"summary": summary, "cached": False})

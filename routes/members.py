@@ -7,6 +7,12 @@ from analyzer.analytics.topics import get_mp_topics
 from analyzer.analytics.trends import get_participation_trend
 from config import DB_PATH
 
+from flask import jsonify
+from analyzer.ai.cache import get_cached_summary, save_summary
+from analyzer.ai.summarizer import summarize_mp
+from config import DB_PATH
+from analyzer.analytics.mp_stats import get_mp_speech_count, get_mp_word_count
+
 members_bp = Blueprint("members", __name__)
 
 
@@ -19,7 +25,7 @@ def mp_list():
         conn.close()
 
         # Attach speech count to each member
-        from analyzer.analytics.mp_stats import get_mp_speech_count, get_mp_word_count
+        
         for member in members:
             member["speech_count"] = get_mp_speech_count(member["id"], DB_PATH)
             member["word_count"] = get_mp_word_count(member["id"], DB_PATH)
@@ -54,3 +60,21 @@ def mp_scorecard(member_id):
         chart_labels=chart_labels,
         chart_data=chart_data,
     )
+
+
+@members_bp.route("/<int:member_id>/summary", methods=["POST"])
+def mp_summary(member_id):
+    """
+    Generates or retrieves a cached AI summary for an MP.
+    Returns JSON: {summary: str, cached: bool}
+    """
+
+    cached = get_cached_summary("mp", member_id, DB_PATH)
+    if cached:
+        return jsonify({"summary": cached["summary"], "cached": True})
+
+    summary = summarize_mp(member_id, DB_PATH)
+    if summary and summary != "Summary could not be generated.":
+        save_summary("mp", member_id, summary, DB_PATH)
+
+    return jsonify({"summary": summary, "cached": False})

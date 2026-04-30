@@ -83,4 +83,3 @@ Run coverage report, write edge case tests to reach 80% coverage
 - Write the README
 - Sync 10+ real Hansards and smoke-test every CLI command
 - Profile performance and add database indexes where needed
-- Add docstrings, pin requirements.txt, create .env.example
