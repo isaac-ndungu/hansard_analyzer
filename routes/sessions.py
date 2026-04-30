@@ -69,13 +69,20 @@ def session_detail(session_id):
         s["agenda_item"] for s in speeches if s["agenda_item"]
     ))
 
+    # Calculate totals
+    total_speakers = len(speakers)
+    total_words = sum(s["word_count"] for s in speeches if s["word_count"])
+    top_speakers = speakers[:5]  # Top 5 speakers
+
     conn.close()
 
     return render_template(
         "session.html",
         session=session,
         speeches=speeches,
-        speakers=speakers,
+        top_speakers=top_speakers,
+        total_speakers=total_speakers,
+        total_words=total_words,
         sections=sections,
         agenda_items=agenda_items,
     )

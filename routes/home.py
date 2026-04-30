@@ -15,3 +15,9 @@ def index():
         recent_sessions=recent_sessions,
         trending_topics=trending_topics,
     )
+
+
+@home_bp.route("/about")
+def about():
+    """About page with information about the Hansard Analyzer."""
+    return render_template("about.html")

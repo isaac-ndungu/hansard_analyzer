@@ -4,144 +4,214 @@
 {% block content %}
 
 <!--  Hero  -->
-<div class="text-center pt-16 pb-12">
-    <div class="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-xs font-medium px-3 py-1 rounded-full mb-5">
-        <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
-        Thirteenth Parliament · National Assembly
-    </div>
+<div class="relative h-screen flex items-center justify-center text-center overflow-hidden">
+    <img src="/static/images/home_hero.png" alt="Parliament" class="absolute inset-0 w-full h-full object-cover">
 
-    <h1 class="font-serif text-4xl sm:text-5xl font-semibold text-gray-900 mb-4 leading-tight">
-        Kenya Hansard Analyzer
-    </h1>
-    <p class="text-gray-500 text-lg mb-8 max-w-xl mx-auto">
-        Search every word spoken in Kenya's National Assembly.
-        Track MPs, follow legislation, explore debates.
-    </p>
+    <div class="absolute inset-0 bg-black/40"></div>
 
-    <form action="{{ url_for('search.search') }}" method="get" class="flex justify-center">
-        <div class="flex w-full max-w-xl shadow-sm rounded-lg overflow-hidden border border-gray-300 focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-100 transition-all">
-            <input
-                type="text"
-                name="q"
-                class="flex-1 px-4 py-3 text-sm outline-none bg-white placeholder-gray-400"
-                placeholder="Search speeches, MPs, topics…"
-                autofocus
-            />
-            <button type="submit"
+    <div class="relative max-w-3xl mx-auto pt-48">
+        <h1 class="font-serif text-4xl sm:text-5xl font-semibold text-gray-900 mb-4 leading-tight">
+            Kenya Hansard Analyzer
+        </h1>
+        <p class="text-gray-500 text-lg mb-8 max-w-xl mx-auto">
+            Search every word spoken in Kenya's National Assembly.
+            Track MPs, follow legislation, explore debates.
+        </p>
+        <form action="{{ url_for('search.search') }}" method="get" class="flex justify-center">
+            <div
+                class="flex w-full max-w-xl shadow-sm rounded-lg overflow-hidden border border-gray-300 focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-100 transition-all">
+                <input type="text" name="q" class="flex-1 px-4 py-3 text-sm outline-none bg-white placeholder-gray-400"
+                    placeholder="Search speeches, MPs, topics…" autofocus />
+                <button type="submit"
                     class="bg-green-600 hover:bg-green-700 transition-colors text-white px-5 py-3 text-sm font-medium whitespace-nowrap">
-                Search
-            </button>
-        </div>
-    </form>
+                    Search
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
-<!--  Browse cards ─ -->
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-14">
-    <a href="{{ url_for('members.mp_list') }}"
-       class="group border border-gray-200 rounded-xl p-5 bg-white hover:border-green-400 hover:shadow-md transition-all text-left">
-        <div class="text-2xl mb-3">👤</div>
-        <div class="font-semibold text-gray-900 mb-1">Browse MPs</div>
-        <p class="text-sm text-gray-500 leading-relaxed">
-            Participation records, speech counts and sentiment profiles for every Member of Parliament.
-        </p>
-        <span class="mt-3 inline-block text-green-600 text-sm font-medium group-hover:underline">
-            View all MPs →
-        </span>
-    </a>
+<div>
+        <h2 class="text-4xl font-bold text-center mt-12 mb-6">Explore the Data</h2>
+        <div class="h-1 w-20 bg-green-500 mx-auto my-12"></div>
 
-    <a href="{{ url_for('sessions.session_list') }}"
-       class="group border border-gray-200 rounded-xl p-5 bg-white hover:border-green-400 hover:shadow-md transition-all text-left">
-        <div class="text-2xl mb-3">📅</div>
-        <div class="font-semibold text-gray-900 mb-1">Browse Sessions</div>
-        <p class="text-sm text-gray-500 leading-relaxed">
-            Full transcripts from every sitting of the National Assembly, searchable and browseable.
-        </p>
-        <span class="mt-3 inline-block text-green-600 text-sm font-medium group-hover:underline">
-            View all sessions →
-        </span>
-    </a>
-
-    <a href="{{ url_for('topics.topics_overview') }}"
-       class="group border border-gray-200 rounded-xl p-5 bg-white hover:border-green-400 hover:shadow-md transition-all text-left">
-        <div class="text-2xl mb-3">🏷️</div>
-        <div class="font-semibold text-gray-900 mb-1">Browse Topics</div>
-        <p class="text-sm text-gray-500 leading-relaxed">
-            Explore how Parliament has debated healthcare, finance, education, security and more.
-        </p>
-        <span class="mt-3 inline-block text-green-600 text-sm font-medium group-hover:underline">
-            View all topics →
-        </span>
-    </a>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-20">
+    
+        <!-- MPs -->
+        <a href="{{ url_for('members.mp_list') }}"
+            class="group relative bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+    
+            <div class="w-12 h-12 flex items-center justify-center rounded-lg bg-green-50 text-green-600 mb-4">
+                <!-- Users Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                        d="M17 20h5v-1a4 4 0 00-5-3.87M9 20H4v-1a4 4 0 015-3.87m8-4a4 4 0 10-8 0 4 4 0 008 0zM5 10a4 4 0 118 0 4 4 0 01-8 0z" />
+                </svg>
+            </div>
+    
+            <div class="font-semibold text-gray-900 mb-2 text-lg">Browse MPs</div>
+    
+            <p class="text-sm text-gray-500 leading-relaxed">
+                Explore participation records, speech counts, and sentiment profiles for every Member of Parliament.
+                Quickly identify the most active voices shaping national debate.
+            </p>
+    
+            <span class="mt-4 inline-block text-green-600 text-sm font-medium group-hover:underline">
+                View all MPs →
+            </span>
+        </a>
+    
+    
+        <!-- Sessions -->
+        <a href="{{ url_for('sessions.session_list') }}"
+            class="group relative bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+    
+            <div class="w-12 h-12 flex items-center justify-center rounded-lg bg-green-50 text-green-600 mb-4">
+                <!-- Calendar Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                        d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                </svg>
+            </div>
+    
+            <div class="font-semibold text-gray-900 mb-2 text-lg">Browse Sessions</div>
+    
+            <p class="text-sm text-gray-500 leading-relaxed">
+                Access full transcripts from every sitting of the National Assembly, all searchable and structured.
+                Dive into debates exactly as they happened, with context preserved.
+            </p>
+    
+            <span class="mt-4 inline-block text-green-600 text-sm font-medium group-hover:underline">
+                View all sessions →
+            </span>
+        </a>
+    
+    
+        <!-- Topics -->
+        <a href="{{ url_for('topics.topics_overview') }}"
+            class="group relative bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+    
+            <div class="w-12 h-12 flex items-center justify-center rounded-lg bg-green-50 text-green-600 mb-4">
+                <!-- Tag Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                        d="M7 7h.01M3 11l8.586 8.586a2 2 0 002.828 0l6.172-6.172a2 2 0 000-2.828L12 3H5a2 2 0 00-2 2v6z" />
+                </svg>
+            </div>
+    
+            <div class="font-semibold text-gray-900 mb-2 text-lg">Browse Topics</div>
+    
+            <p class="text-sm text-gray-500 leading-relaxed">
+                Explore how Parliament has debated healthcare, finance, education, security, and more.
+                Spot trends in national priorities across different legislative periods.
+            </p>
+    
+            <span class="mt-4 inline-block text-green-600 text-sm font-medium group-hover:underline">
+                View all topics →
+            </span>
+        </a>
+    
+    </div>
 </div>
 
 <!--  Latest sessions + trending topics ─ -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+<div class="bg-gray-50 border border-gray-200 rounded-2xl p-6 md:p-8">
+    <h2 class="text-4xl font-bold  mb-4">Latest Updates</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
 
-    <div>
-        <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">
-            Latest Sessions
-        </h2>
-        {% if recent_sessions %}
-        <ul class="divide-y divide-gray-100">
-            {% for session in recent_sessions %}
-            <li>
-                <a href="{{ url_for('sessions.session_detail', session_id=session.id) }}"
-                   class="flex items-center justify-between py-3 px-2 -mx-2 hover:bg-gray-50 rounded transition-colors group">
-                    <div>
-                        <span class="text-sm font-medium text-gray-800">{{ session.date }}</span>
-                        <span class="text-xs text-gray-400 ml-2">
-                            Vol. {{ session.volume or '—' }} · No. {{ session.issue or '—' }}
+        <!-- Latest Sessions -->
+        <div>
+            <h2 class="text-sm font-semibold text-gray-700 mb-1">
+                Latest Sessions
+            </h2>
+            <p class="text-xs text-gray-400 mb-4">
+                Recently recorded sittings of the National Assembly. Stay up to date with the latest proceedings.
+            </p>
+
+            {% if recent_sessions %}
+            <ul class="space-y-2">
+                {% for session in recent_sessions %}
+                <li>
+                    <a href="{{ url_for('sessions.session_detail', session_id=session.id) }}"
+                        class="flex items-center justify-between p-3 rounded-lg hover:bg-white hover:shadow-sm transition-all group border border-transparent hover:border-gray-200">
+
+                        <div>
+                            <div class="text-sm font-medium text-gray-800">
+                                {{ session.date }}
+                            </div>
+                            <div class="text-xs text-gray-400">
+                                Vol. {{ session.volume or '—' }} · No. {{ session.issue or '—' }}
+                            </div>
+                        </div>
+
+                        <span class="text-gray-300 group-hover:text-green-500 transition-colors text-sm">
+                            →
                         </span>
-                    </div>
-                    <span class="text-gray-300 group-hover:text-green-500 transition-colors text-sm">→</span>
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
-        <a href="{{ url_for('sessions.session_list') }}"
-           class="mt-3 inline-block text-sm text-green-600 hover:underline">
-            View all sessions →
-        </a>
-        {% else %}
-        <p class="text-sm text-gray-400">
-            No sessions yet. Run
-            <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">flask sync</code>
-            to get started.
-        </p>
-        {% endif %}
-    </div>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
 
-    <div>
-        <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">
-            Trending Topics
-        </h2>
-        {% if trending_topics %}
-        <ul class="divide-y divide-gray-100">
-            {% for item in trending_topics[:5] %}
-            <li>
-                <a href="{{ url_for('topics.topic_detail', topic_name=item.topic) }}"
-                   class="flex items-center justify-between py-3 px-2 -mx-2 hover:bg-gray-50 rounded transition-colors group">
-                    <span class="text-sm font-medium text-gray-800 capitalize">{{ item.topic }}</span>
-                    <span class="text-xs bg-gray-100 text-gray-500 px-2.5 py-0.5 rounded-full">
-                        {{ item.speech_count }} speeches
-                    </span>
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
-        <a href="{{ url_for('topics.topics_overview') }}"
-           class="mt-3 inline-block text-sm text-green-600 hover:underline">
-            View all topics →
-        </a>
-        {% else %}
-        <p class="text-sm text-gray-400">
-            No topic data yet. Run
-            <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">flask sync</code>
-            to get started.
-        </p>
-        {% endif %}
-    </div>
+            <a href="{{ url_for('sessions.session_list') }}"
+                class="mt-4 inline-block text-sm text-green-600 hover:underline">
+                View all sessions →
+            </a>
 
+            {% else %}
+            <p class="text-sm text-gray-400">
+                No sessions yet. Run
+                <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">flask sync</code>
+                to get started.
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- Trending Topics -->
+        <div>
+            <h2 class="text-sm font-semibold text-gray-700 mb-1">
+                Trending Topics
+            </h2>
+            <p class="text-xs text-gray-400 mb-4">
+                Topics gaining the most attention in recent debates. A snapshot of what Parliament is focused on right
+                now.
+            </p>
+
+            {% if trending_topics %}
+            <ul class="space-y-2">
+                {% for item in trending_topics[:5] %}
+                <li>
+                    <a href="{{ url_for('topics.topic_detail', topic_name=item.topic) }}"
+                        class="flex items-center justify-between p-3 rounded-lg hover:bg-white hover:shadow-sm transition-all group border border-transparent hover:border-gray-200">
+
+                        <span class="text-sm font-medium text-gray-800 capitalize">
+                            {{ item.topic }}
+                        </span>
+
+                        <span class="text-xs bg-green-50 text-green-700 px-2.5 py-0.5 rounded-full font-medium">
+                            {{ item.speech_count }} speeches
+                        </span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+
+            <a href="{{ url_for('topics.topics_overview') }}"
+                class="mt-4 inline-block text-sm text-green-600 hover:underline">
+                View all topics →
+            </a>
+
+            {% else %}
+            <p class="text-sm text-gray-400">
+                No topic data yet. Run
+                <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">flask sync</code>
+                to get started.
+            </p>
+            {% endif %}
+        </div>
+
+    </div>
 </div>
-
 {% endblock %}

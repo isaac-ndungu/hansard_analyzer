@@ -1,49 +1,43 @@
 {% extends "base.html" %}
 
-{% block title %}Sessions — Hansard Analyzer{% endblock %}
+{% block title %}Parliamentary Sessions — Hansard Analyzer{% endblock %}
 
 {% block content %}
 
-<div class="mb-4">
-    <h2 class="fw-semibold mb-1">Parliamentary Sessions</h2>
-    <p class="text-muted mb-0">{{ sessions|length }} sessions in the database</p>
+<!-- Header -->
+<div class="mb-8">
+    <h1 class="font-serif text-3xl sm:text-4xl font-semibold text-gray-900 mb-2">Parliamentary Sessions</h1>
+    <p class="text-gray-500 text-lg">{{ sessions|length }} sitting{{ 's' if sessions|length != 1 else '' }} recorded</p>
 </div>
 
 {% if sessions %}
-<div class="table-responsive">
-    <table class="table table-hover align-middle">
-        <thead class="table-light">
-            <tr>
-                <th>Date</th>
-                <th>Chamber</th>
-                <th>Volume</th>
-                <th>Issue</th>
-                <th class="text-end">Speeches</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for session in sessions %}
-            <tr>
-                <td class="fw-medium">{{ session.date }}</td>
-                <td class="text-muted small">{{ session.chamber }}</td>
-                <td class="text-muted">{{ session.volume or '—' }}</td>
-                <td class="text-muted">{{ session.issue or '—' }}</td>
-                <td class="text-end">{{ session.speech_count }}</td>
-                <td class="text-end">
-                    <a href="{{ url_for('sessions.session_detail', session_id=session.id) }}"
-                       class="btn btn-sm btn-outline-secondary">
-                        Read <i class="bi bi-arrow-right ms-1"></i>
-                    </a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="space-y-3">
+    {% for session in sessions %}
+    <a href="{{ url_for('sessions.session_detail', session_id=session.id) }}"
+       class="group flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white hover:border-green-400 hover:shadow-md hover:bg-green-50 transition-all duration-200">
+        <div class="flex-1 min-w-0">
+            <div class="flex items-baseline gap-3 flex-wrap">
+                <div class="font-serif font-semibold text-gray-900 text-lg group-hover:text-green-600 transition-colors">{{ session.date }}</div>
+                <span class="text-xs text-gray-500 font-medium">{{ session.chamber }}</span>
+            </div>
+            <div class="mt-1 flex items-center gap-4 text-sm text-gray-600 flex-wrap">
+                {% if session.volume %}
+                    <span>Vol. {{ session.volume }}</span>
+                {% endif %}
+                {% if session.issue %}
+                    <span>No. {{ session.issue }}</span>
+                {% endif %}
+                <span class="text-gray-400">•</span>
+                <span class="text-green-600 font-medium">{{ session.speech_count }} speech{{ 'es' if session.speech_count != 1 else '' }}</span>
+            </div>
+        </div>
+        <div class="flex-shrink-0 text-gray-300 group-hover:text-green-500 transition-colors ml-4 text-lg font-light">→</div>
+    </a>
+    {% endfor %}
 </div>
 {% else %}
-<div class="alert alert-light border text-muted">
-    No sessions in the database yet. Run <code>flask sync</code> to ingest Hansard data.
+<div class="border border-gray-200 rounded-xl p-8 bg-gray-50 text-center">
+    <p class="text-gray-600 text-sm">No sessions in the database yet. Run <code class="bg-gray-200 px-2 py-1 rounded text-xs">flask sync</code> to ingest Hansard data.</p>
 </div>
 {% endif %}
 

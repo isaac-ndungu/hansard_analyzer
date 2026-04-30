@@ -1,8 +1,10 @@
 import re
 import logging
 from collections import defaultdict
+from pathlib import Path
 
-from config import TOPIC_MAP
+from config import TOPIC_MAP, DB_PATH
+from analyzer.database.seed import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -95,25 +97,29 @@ def get_topic_frequency(
 
 # MP Topic Profile
 
-def get_mp_topics(conn, member_id: int) -> list[dict]:
+def get_mp_topics(member_id: int, db_path: Path = DB_PATH) -> list[dict]:
     """
     Returns all topics associated with a given member's speeches,
     ordered by frequency of appearance.
     """
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT st.topic, COUNT(*) AS count
-        FROM speech_topics st
-        JOIN speeches sp ON st.speech_id = sp.id
-        WHERE sp.member_id = ?
-        GROUP BY st.topic
-        ORDER BY count DESC
-        """,
-        (member_id,),
-    )
-    columns = [d[0] for d in cursor.description]
-    return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    conn = get_connection(db_path)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT st.topic, COUNT(*) AS count
+            FROM speech_topics st
+            JOIN speeches sp ON st.speech_id = sp.id
+            WHERE sp.member_id = ?
+            GROUP BY st.topic
+            ORDER BY count DESC
+            """,
+            (member_id,),
+        )
+        columns = [d[0] for d in cursor.description]
+        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    finally:
+        conn.close()
 
 
 # Trending Topics

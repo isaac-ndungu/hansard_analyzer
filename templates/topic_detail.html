@@ -5,120 +5,107 @@
 {% block content %}
 
 <!-- Breadcrumb -->
-<nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-            <a href="{{ url_for('topics.topics_overview') }}" class="text-muted text-decoration-none">Topics</a>
-        </li>
-        <li class="breadcrumb-item active text-capitalize">{{ topic }}</li>
-    </ol>
-</nav>
-
-<!-- Header -->
-<div class="mb-4 d-flex align-items-center gap-3 flex-wrap">
-    <h2 class="fw-semibold mb-0 text-capitalize">{{ topic }}</h2>
-    {% if sentiment.label == 'Constructive' %}
-        <span class="badge bg-success">{{ sentiment.label }} debate</span>
-    {% elif sentiment.label == 'Heated' %}
-        <span class="badge bg-danger">{{ sentiment.label }} debate</span>
-    {% else %}
-        <span class="badge bg-secondary">{{ sentiment.label }} debate</span>
-    {% endif %}
+<div class="mb-6 flex items-center gap-2 text-sm">
+    <a href="{{ url_for('topics.topics_overview') }}" class="text-gray-600 hover:text-green-600 transition-colors">Topics</a>
+    <span class="text-gray-400">•</span>
+    <span class="text-gray-900 font-medium capitalize">{{ topic }}</span>
 </div>
 
-<!-- Stats -->
-<div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-        <div class="border rounded p-3 text-center">
-            <div class="fs-4 fw-semibold text-success">{{ total_mentions }}</div>
-            <div class="text-muted small">Total Mentions</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="border rounded p-3 text-center">
-            <div class="fs-4 fw-semibold text-success">{{ sentiment.sample_count }}</div>
-            <div class="text-muted small">Speeches Analyzed</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="border rounded p-3 text-center">
-            <div class="fs-4 fw-semibold text-success">{{ "%.2f"|format(sentiment.average_score) }}</div>
-            <div class="text-muted small">Avg Sentiment</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="border rounded p-3 text-center">
-            <div class="fs-4 fw-semibold text-success">{{ top_mps|length }}</div>
-            <div class="text-muted small">Active MPs</div>
-        </div>
+<!-- Header with sentiment -->
+<div class="mb-8">
+    <div class="flex items-start gap-4 flex-wrap mb-3">
+        <h1 class="font-serif text-3xl sm:text-4xl font-semibold text-gray-900 capitalize">{{ topic }}</h1>
+        {% if sentiment.label == 'Constructive' %}
+            <span class="inline-block px-3 py-1 bg-green-100 border border-green-300 text-green-700 text-sm font-semibold rounded-full">{{ sentiment.label }} debate</span>
+        {% elif sentiment.label == 'Heated' %}
+            <span class="inline-block px-3 py-1 bg-red-100 border border-red-300 text-red-700 text-sm font-semibold rounded-full">{{ sentiment.label }} debate</span>
+        {% else %}
+            <span class="inline-block px-3 py-1 bg-gray-100 border border-gray-300 text-gray-700 text-sm font-semibold rounded-full">{{ sentiment.label }} debate</span>
+        {% endif %}
     </div>
 </div>
 
-<div class="row g-4 mb-5">
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="border border-gray-200 rounded-lg p-5 bg-white">
+        <div class="text-3xl font-semibold text-green-600 font-serif">{{ total_mentions }}</div>
+        <div class="text-sm text-gray-600 mt-1">Mentions</div>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-5 bg-white">
+        <div class="text-3xl font-semibold text-green-600 font-serif">{{ sentiment.sample_count }}</div>
+        <div class="text-sm text-gray-600 mt-1">Speeches</div>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-5 bg-white">
+        <div class="text-3xl font-semibold text-green-600 font-serif">{{ "%.2f"|format(sentiment.average_score) }}</div>
+        <div class="text-sm text-gray-600 mt-1">Avg Sentiment</div>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-5 bg-white">
+        <div class="text-3xl font-semibold text-green-600 font-serif">{{ top_mps|length }}</div>
+        <div class="text-sm text-gray-600 mt-1">MPs Speaking</div>
+    </div>
+</div>
 
-    <!-- Frequency trend chart -->
-    <div class="col-12 col-md-8">
-        <h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
-            Frequency Over Time
-        </h6>
-        <div class="border rounded p-3">
+<!-- Main content grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Trend Chart -->
+    <div class="lg:col-span-2">
+        <div class="border border-gray-200 rounded-lg p-6 bg-white">
+            <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Frequency Over Time</h3>
             {% if chart_labels %}
-                <canvas id="topicTrendChart" height="100"></canvas>
+                <canvas id="topicTrendChart" height="80"></canvas>
             {% else %}
-                <p class="text-muted small mb-0">Not enough data to display a chart yet.</p>
+                <p class="text-gray-600 text-sm text-center py-8">Not enough data to display frequency trends.</p>
             {% endif %}
         </div>
     </div>
 
     <!-- Top MPs -->
-    <div class="col-12 col-md-4">
-        {% if top_mps %}
-        <h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
-            Most Active MPs
-        </h6>
-        <ul class="list-group list-group-flush">
+    {% if top_mps %}
+    <div class="border border-gray-200 rounded-lg p-6 bg-white">
+        <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Most Active MPs</h3>
+        <div class="space-y-3">
             {% for mp in top_mps %}
-            <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                <div>
+            <div class="flex items-start justify-between py-2 border-b border-gray-100 last:border-b-0">
+                <div class="flex-1">
                     <a href="{{ url_for('members.mp_scorecard', member_id=mp.id) }}"
-                       class="text-decoration-none fw-medium">
+                       class="font-medium text-gray-900 hover:text-green-600 transition-colors">
                         {{ mp.name }}
                     </a>
-                    <div class="text-muted small">{{ mp.constituency }}</div>
+                    <div class="text-xs text-gray-600 mt-1">{{ mp.constituency }}</div>
                 </div>
-                <span class="text-muted small">{{ mp.count }}</span>
-            </li>
+                <span class="text-sm font-semibold text-green-600 ml-2">{{ mp.count }}</span>
+            </div>
             {% endfor %}
-        </ul>
-        {% endif %}
+        </div>
     </div>
-
+    {% endif %}
 </div>
 
-<!-- Recent speeches -->
+<!-- Recent Speeches -->
 {% if speeches %}
-<h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
-    Recent Speeches on {{ topic | capitalize }}
-</h6>
-<div class="speech-log">
-    {% for speech in speeches %}
-    <div class="border-bottom py-3">
-        <div class="d-flex justify-content-between flex-wrap gap-2 mb-1">
-            <div>
-                <a href="{{ url_for('members.mp_scorecard', member_id=speech.member_id) }}"
-                   class="fw-medium text-decoration-none">
-                    {{ speech.member_name }}
-                </a>
-                <span class="text-muted small ms-2">{{ speech.constituency }}</span>
-                <span class="badge bg-light text-dark border small ms-1">{{ speech.party }}</span>
+<div>
+    <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Recent Speeches on {{ topic | capitalize }}</h3>
+    <div class="space-y-4">
+        {% for speech in speeches %}
+        <div class="border border-gray-200 rounded-lg p-5 bg-white hover:shadow-md transition-shadow">
+            <div class="flex items-start justify-between gap-3 mb-3 flex-wrap">
+                <div>
+                    <a href="{{ url_for('members.mp_scorecard', member_id=speech.member_id) }}"
+                       class="font-medium text-gray-900 hover:text-green-600 transition-colors">
+                        {{ speech.member_name }}
+                    </a>
+                    <div class="text-sm text-gray-600 mt-1">
+                        {{ speech.constituency }}
+                        <span class="mx-2 text-gray-400">•</span>
+                        <span class="inline-block px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-medium">{{ speech.party }}</span>
+                    </div>
+                </div>
+                <span class="text-sm text-gray-600 whitespace-nowrap">{{ speech.date }}</span>
             </div>
-            <span class="text-muted small">{{ speech.date }}</span>
+            <p class="text-gray-700 leading-relaxed text-sm">{{ speech.content[:300] }}{% if speech.content|length > 300 %}…{% endif %}</p>
         </div>
-        <p class="mb-0 text-secondary">
-            {{ speech.content[:300] }}{% if speech.content|length > 300 %}…{% endif %}
-        </p>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
 {% endif %}
 
@@ -135,17 +122,19 @@ new Chart(ctx, {
         datasets: [{
             label: "Speeches",
             data: {{ chart_data | tojson }},
-            backgroundColor: "rgba(25,135,84,0.7)",
-            borderColor: "#198754",
+            backgroundColor: "rgba(34, 197, 94, 0.8)",
+            borderColor: "#16a34a",
             borderWidth: 1,
-            borderRadius: 4,
+            borderRadius: 6,
         }]
     },
     options: {
         responsive: true,
+        maintainAspectRatio: true,
         plugins: { legend: { display: false } },
         scales: {
-            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: "rgba(0,0,0,0.05)" } },
+            x: { grid: { display: false } }
         }
     }
 });

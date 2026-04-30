@@ -6,87 +6,89 @@
 
 {% block content %}
 
-<div class="mb-4">
-    <h2 class="fw-semibold mb-3">Search the Hansard</h2>
+<!-- Header -->
+<div class="mb-8">
+    <h1 class="font-serif text-3xl sm:text-4xl font-semibold text-gray-900 mb-3">Search the Hansard</h1>
+</div>
 
-    <form action="{{ url_for('search.search') }}" method="get">
-        <div class="row g-2 align-items-end">
-            <div class="col-12 col-md-6">
-                <div class="input-group">
-                    <input
-                        type="text"
-                        name="q"
-                        class="form-control"
-                        placeholder="Search speeches..."
-                        value="{{ query }}"
-                    />
-                    <button class="btn btn-success" type="submit">
-                        <i class="bi bi-search"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="col-6 col-md-2">
-                <input type="date" name="from_date" class="form-control" value="{{ from_date }}" placeholder="From" />
-            </div>
-            <div class="col-6 col-md-2">
-                <input type="date" name="to_date" class="form-control" value="{{ to_date }}" placeholder="To" />
-            </div>
+<!-- Search Form -->
+<div class="mb-8 border border-gray-200 rounded-lg p-6 bg-white">
+    <form action="{{ url_for('search.search') }}" method="get" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <input
+                type="text"
+                name="q"
+                class="md:col-span-2 px-4 py-3 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-100 focus:border-green-500 outline-none transition-all"
+                placeholder="Search speeches, MPs, topics…"
+                value="{{ query }}"
+                autofocus
+            />
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2">
+                <span>Search</span>
+                <span>🔍</span>
+            </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input type="date" name="from_date" class="px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-100 focus:border-green-500 outline-none" value="{{ from_date }}" />
+            <input type="date" name="to_date" class="px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-100 focus:border-green-500 outline-none" value="{{ to_date }}" />
         </div>
     </form>
 </div>
 
 {% if query %}
-    <p class="text-muted mb-4">
-        {% if total > 0 %}
-            <strong>{{ total }}</strong> speech{{ 'es' if total != 1 else '' }} found for
-            <strong>"{{ query }}"</strong>
-        {% else %}
-            No speeches found for <strong>"{{ query }}"</strong>.
-            Try a different keyword.
-        {% endif %}
-    </p>
+    <!-- Search Results -->
+    <div class="mb-6">
+        <p class="text-gray-600">
+            {% if total > 0 %}
+                <strong class="text-green-600 font-semibold">{{ total }}</strong> speech{{ 'es' if total != 1 else '' }} found for <strong>"{{ query }}"</strong>
+            {% else %}
+                No results for <strong>"{{ query }}"</strong>. Try a different search term.
+            {% endif %}
+        </p>
+    </div>
 
     {% if results %}
-    <div class="search-results">
+    <div class="space-y-4">
         {% for result in results %}
-        <div class="border rounded p-3 mb-3">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+        <div class="border border-gray-200 rounded-lg p-5 bg-white hover:shadow-lg transition-shadow">
+            <div class="flex items-start justify-between gap-4 flex-wrap mb-3">
                 <div>
                     <a href="{{ url_for('members.mp_scorecard', member_id=result.member_id) }}"
-                       class="fw-medium text-decoration-none">
+                       class="font-medium text-gray-900 hover:text-green-600 transition-colors">
                         {{ result.member_name }}
                     </a>
-                    <span class="text-muted small ms-2">{{ result.constituency }}</span>
-                    <span class="badge bg-light text-dark border small ms-1">{{ result.party }}</span>
+                    <div class="text-sm text-gray-600 mt-1">
+                        {{ result.constituency }}
+                        <span class="mx-2 text-gray-400">•</span>
+                        <span class="inline-block px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-medium">{{ result.party }}</span>
+                    </div>
                 </div>
-                <div class="d-flex gap-2 align-items-center">
-                    <span class="text-muted small">{{ result.date }}</span>
-                    <span class="badge bg-light text-dark border small">
+                <div class="flex items-center gap-2 flex-wrap justify-end">
+                    <span class="text-sm text-gray-600">{{ result.date }}</span>
+                    <span class="inline-block px-3 py-1 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium rounded-full">
                         {{ result.agenda_item if result.agenda_item else (result.section.lower() if result.section else '') }}
                     </span>
                     <a href="{{ url_for('sessions.session_detail', session_id=result.session_id) }}"
-                       class="btn btn-sm btn-outline-secondary py-0">
-                        Session <i class="bi bi-arrow-right ms-1"></i>
+                       class="inline-flex items-center px-3 py-1.5 bg-green-50 border border-green-200 text-green-700 text-xs font-medium rounded-lg hover:bg-green-100 transition-colors gap-1">
+                        Session →
                     </a>
                 </div>
             </div>
-            <p class="mb-0 text-secondary search-excerpt">
-                {{ result.content[:400] }}{% if result.content|length > 400 %}…{% endif %}
-            </p>
+            <p class="text-gray-700 leading-relaxed text-sm search-excerpt">{{ result.content[:400] }}{% if result.content|length > 400 %}…{% endif %}</p>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
 {% else %}
-    <!-- Suggested searches when no query submitted -->
-    <div class="mt-4">
-        <p class="text-muted small fw-semibold text-uppercase letter-spacing mb-3">Suggested searches</p>
-        <div class="d-flex flex-wrap gap-2">
+    <!-- Suggested Searches -->
+    <div>
+        <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Popular searches</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {% for suggestion in ['healthcare', 'roads', 'budget', 'education', 'water', 'corruption', 'housing', 'teachers'] %}
             <a href="{{ url_for('search.search', q=suggestion) }}"
-               class="badge bg-light text-dark border text-decoration-none fs-6 py-2 px-3">
-                {{ suggestion }}
+               class="text-center px-4 py-3 rounded-lg border border-gray-200 bg-white hover:border-green-400 hover:shadow-md transition-all hover:bg-green-50">
+                <span class="text-sm font-medium text-gray-900 hover:text-green-600">{{ suggestion }}</span>
             </a>
             {% endfor %}
         </div>
@@ -98,14 +100,13 @@
 {% block scripts %}
 {% if query and results %}
 <script>
-// Highlight search keyword in excerpts
 const keyword = {{ query | tojson }};
 const excerpts = document.querySelectorAll(".search-excerpt");
 excerpts.forEach(el => {
     const regex = new RegExp(`(${keyword})`, "gi");
     el.innerHTML = el.textContent.replace(
         regex,
-        '<mark class="bg-warning px-0">$1</mark>'
+        '<mark class="bg-yellow-200 px-1 rounded">$1</mark>'
     );
 });
 </script>

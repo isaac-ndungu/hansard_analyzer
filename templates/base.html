@@ -42,17 +42,16 @@
     </style>
 </head>
 
-<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+<body class=" text-stone-900 min-h-screen flex flex-col">
 
 <!-- Navbar -->
-<nav class="bg-gray-900 border-b border-gray-700 sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+<nav class="bg-green-800 border-b border-gray-700 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-14">
 
             <!-- Brand -->
             <a href="{{ url_for('home.index') }}"
-               class="text-white font-serif font-semibold text-lg tracking-tight flex items-center gap-2 hover:text-green-400 transition-colors">
-                <span class="text-green-500">⬡</span>
+               class="text-white font-sans font-bold text-lg tracking-tight flex items-center gap-2 hover:text-green-400 transition-colors tracking-widest">
                 Hansard Analyzer
             </a>
 
@@ -66,6 +65,8 @@
                    class="hover:text-white transition-colors">Topics</a>
                 <a href="{{ url_for('search.search') }}"
                    class="hover:text-white transition-colors">Search</a>
+                <a href="{{ url_for('home.about') }}"
+                   class="hover:text-white transition-colors">About</a>
                 <span class="bg-green-800 text-green-100 text-xs font-medium px-2 py-0.5 rounded-full">
                     Kenya Parliament
                 </span>
@@ -89,20 +90,21 @@
             <a href="{{ url_for('sessions.session_list') }}" class="block hover:text-white py-1">Sessions</a>
             <a href="{{ url_for('topics.topics_overview') }}" class="block hover:text-white py-1">Topics</a>
             <a href="{{ url_for('search.search') }}" class="block hover:text-white py-1">Search</a>
+            <a href="{{ url_for('home.about') }}" class="block hover:text-white py-1">About</a>
         </div>
     </div>
 </nav>
 
 <!-- Page content -->
-<main class="flex-1 py-8">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+<main class="flex-1">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {% block content %}{% endblock %}
     </div>
 </main>
 
 <!-- Footer -->
 <footer class="border-t border-gray-200 mt-12 py-6 text-center text-sm text-gray-400">
-    <div class="max-w-6xl mx-auto px-4">
+    <div class="max-w-7xl mx-auto px-4">
         Data sourced from
         <a href="https://parliament.go.ke" target="_blank"
            class="underline hover:text-gray-600 transition-colors">parliament.go.ke</a>

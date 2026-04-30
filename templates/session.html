@@ -5,125 +5,123 @@
 {% block content %}
 
 <!-- Breadcrumb -->
-<nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-            <a href="{{ url_for('sessions.session_list') }}" class="text-muted text-decoration-none">Sessions</a>
-        </li>
-        <li class="breadcrumb-item active">{{ session.date }}</li>
-    </ol>
-</nav>
+<div class="mb-6 flex items-center gap-2 text-sm">
+    <a href="{{ url_for('sessions.session_list') }}" class="text-gray-600 hover:text-green-600 transition-colors">Sessions</a>
+    <span class="text-gray-400">•</span>
+    <span class="text-gray-900 font-medium">{{ session.date }}</span>
+</div>
 
-<!-- Session header -->
-<div class="mb-4">
-    <h2 class="fw-semibold mb-1">{{ session.date }}</h2>
-    <p class="text-muted mb-0">
+<!-- Header -->
+<div class="mb-8">
+    <h1 class="font-serif text-3xl sm:text-4xl font-semibold text-gray-900 mb-2">{{ session.date }}</h1>
+    <p class="text-gray-600 text-base">
         {{ session.chamber }}
-        {% if session.volume %}&nbsp;&middot;&nbsp;Vol. {{ session.volume }}{% endif %}
-        {% if session.issue %}&nbsp;&middot;&nbsp;No. {{ session.issue }}{% endif %}
-        {% if session.parliament_number %}&nbsp;&middot;&nbsp;{{ session.parliament_number }}th Parliament{% endif %}
+        {% if session.volume %}<span class="text-gray-400 mx-2">•</span>Vol. {{ session.volume }}{% endif %}
+        {% if session.issue %}<span class="text-gray-400 mx-2">•</span>No. {{ session.issue }}{% endif %}
+        {% if session.parliament_number %}<span class="text-gray-400 mx-2">•</span>{{ session.parliament_number }}th Parliament{% endif %}
     </p>
 </div>
 
-<!-- Stats row -->
-<div class="row g-3 mb-4">
-    <div class="col-4">
-        <div class="border rounded p-3 text-center">
-            <div class="fs-4 fw-semibold text-success">{{ total_speakers }}</div>
-            <div class="text-muted small">Speakers</div>
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+    <div class="border border-gray-200 rounded-xl p-6 bg-white">
+        <div class="flex items-baseline gap-2 mb-1">
+            <div class="font-serif text-3xl font-semibold text-green-600">{{ total_speakers }}</div>
         </div>
+        <div class="text-sm text-gray-600">Speakers Present</div>
     </div>
-    <div class="col-4">
-        <div class="border rounded p-3 text-center">
-            <div class="fs-4 fw-semibold text-success">{{ speeches|length }}</div>
-            <div class="text-muted small">Speeches</div>
+    <div class="border border-gray-200 rounded-xl p-6 bg-white">
+        <div class="flex items-baseline gap-2 mb-1">
+            <div class="font-serif text-3xl font-semibold text-green-600">{{ speeches|length }}</div>
         </div>
+        <div class="text-sm text-gray-600">Speeches Delivered</div>
     </div>
-    <div class="col-4">
-        <div class="border rounded p-3 text-center">
-            <div class="fs-4 fw-semibold text-success">{{ "{:,}".format(total_words) }}</div>
-            <div class="text-muted small">Words</div>
+    <div class="border border-gray-200 rounded-xl p-6 bg-white">
+        <div class="flex items-baseline gap-2 mb-1">
+            <div class="font-serif text-3xl font-semibold text-green-600">{{ "{:,}".format(total_words) }}</div>
         </div>
+        <div class="text-sm text-gray-600">Words Spoken</div>
     </div>
 </div>
 
-<div class="row g-4 mb-5">
-
-    <!-- Agenda items covered -->
-    <div class="col-12 col-md-6">
-        <h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
-            Agenda Items
-        </h6>
-        <div class="d-flex flex-wrap gap-2">
-            {% for item in agenda_items %}
-            <span class="badge bg-light text-dark border">
-                {{ item }}
-            </span>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Sections covered -->
-    <div class="col-12 col-md-6">
-        <h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
-            Sections Covered
-        </h6>
-        <div class="d-flex flex-wrap gap-2">
-            {% for section in sections %}
-            <span class="badge bg-light text-dark border text-capitalize">
-                {{ section.lower() }}
-            </span>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Top speakers -->
-    <div class="col-12 col-md-6">
-        <h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
-            Most Active Speakers
-        </h6>
-        <ul class="list-group list-group-flush">
-            {% for speaker in top_speakers %}
-            <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                <a href="{{ url_for('members.mp_list') }}" class="text-decoration-none">
-                    {{ speaker.name }}
-                </a>
-                <span class="text-muted small">{{ speaker.count }} speech{{ 'es' if speaker.count != 1 else '' }}</span>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-
-</div>
-
-<!-- Full speech log -->
-<h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
-    Full Speech Log
-</h6>
-
-{% if speeches %}
-<div class="speech-log">
-    {% for speech in speeches %}
-    <div class="speech-entry border-bottom py-3">
-        <div class="d-flex justify-content-between align-items-start mb-1 flex-wrap gap-2">
-            <div>
-                <a href="{{ url_for('members.mp_scorecard', member_id=speech.member_id) }}"
-                   class="fw-medium text-decoration-none">
-                    {{ speech.member_name }}
-                </a>
-                <span class="text-muted small ms-2">{{ speech.constituency }}</span>
-                <span class="badge bg-light text-dark border small ms-1">{{ speech.party }}</span>
+<!-- Two-column layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Agenda Items -->
+    <div class="lg:col-span-2">
+        <div class="border border-gray-200 rounded-xl p-6 bg-white">
+            <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Agenda Items Covered</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for item in agenda_items %}
+                <span class="inline-block px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-sm font-medium rounded-lg">
+                    {{ item }}
+                </span>
+                {% endfor %}
             </div>
-            <span class="badge bg-light text-dark border small">
-                {{ speech.agenda_item if speech.agenda_item else (speech.section.lower() if speech.section else '') }}
-            </span>
         </div>
-        <p class="mb-0 text-secondary speech-content">{{ speech.content }}</p>
     </div>
-    {% endfor %}
+    
+    <!-- Sections -->
+    <div>
+        <div class="border border-gray-200 rounded-xl p-6 bg-white">
+            <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Sections Covered</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for section in sections %}
+                <span class="inline-block px-3 py-1.5 bg-purple-50 border border-purple-200 text-purple-700 text-sm font-medium rounded-lg capitalize">
+                    {{ section.lower() }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 </div>
-{% else %}
-<p class="text-muted">No speeches found for this session.</p>
-{% endif %}
+
+<!-- Top Speakers -->
+<div class="mb-8">
+    <div class="border border-gray-200 rounded-xl p-6 bg-white">
+        <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Most Active Speakers</h3>
+        <div class="space-y-3">
+            {% for speaker in top_speakers %}
+            <div class="flex items-center justify-between py-2">
+                <a href="{{ url_for('members.mp_list') }}" class="text-gray-900 font-medium hover:text-green-600 transition-colors">{{ speaker.name }}</a>
+                <span class="text-sm text-gray-600 font-medium">{{ speaker.count }} speech{{ 'es' if speaker.count != 1 else '' }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Speech Log -->
+<div>
+    <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Full Speech Log</h3>
+    {% if speeches %}
+    <div class="space-y-4">
+        {% for speech in speeches %}
+        <div class="border border-gray-200 rounded-lg p-5 bg-white hover:shadow-md transition-shadow">
+            <div class="flex items-start justify-between gap-3 mb-3 flex-wrap">
+                <div>
+                    <a href="{{ url_for('members.mp_scorecard', member_id=speech.member_id) }}"
+                       class="font-medium text-gray-900 hover:text-green-600 transition-colors">
+                        {{ speech.member_name }}
+                    </a>
+                    <div class="text-sm text-gray-600 mt-1">
+                        {{ speech.constituency }}
+                        <span class="mx-2 text-gray-400">•</span>
+                        <span class="inline-block px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-medium">{{ speech.party }}</span>
+                    </div>
+                </div>
+                <span class="inline-block px-3 py-1 bg-green-50 border border-green-200 text-green-700 text-xs font-medium rounded-full whitespace-nowrap">
+                    {{ speech.agenda_item if speech.agenda_item else (speech.section.lower() if speech.section else '') }}
+                </span>
+            </div>
+            <p class="text-gray-700 leading-relaxed text-sm">{{ speech.content }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12 border border-gray-200 rounded-lg bg-gray-50">
+        <p class="text-gray-600 text-sm">No speeches found for this session.</p>
+    </div>
+    {% endif %}
+</div>
 
 {% endblock %}

@@ -4,128 +4,114 @@
 
 {% block content %}
 
-<!-- MP Header -->
-<div class="mb-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-                <a href="{{ url_for('members.mp_list') }}" class="text-muted text-decoration-none">MPs</a>
-            </li>
-            <li class="breadcrumb-item active">{{ profile.name }}</li>
-        </ol>
-    </nav>
+<!-- Breadcrumb -->
+<div class="mb-6 flex items-center gap-2 text-sm">
+    <a href="{{ url_for('members.mp_list') }}" class="text-gray-600 hover:text-green-600 transition-colors">MPs</a>
+    <span class="text-gray-400">•</span>
+    <span class="text-gray-900 font-medium">{{ profile.name }}</span>
+</div>
 
-    <div class="d-flex align-items-center gap-3 flex-wrap">
-        <h2 class="fw-semibold mb-0">{{ profile.name }}</h2>
-        <!-- Sentiment badge -->
+<!-- Header with sentiment badge -->
+<div class="mb-8">
+    <div class="flex items-start gap-4 flex-wrap mb-3">
+        <h1 class="font-serif text-3xl sm:text-4xl font-semibold text-gray-900">{{ profile.name }}</h1>
         {% if sentiment.label == 'Constructive' %}
-            <span class="badge bg-success">{{ sentiment.label }}</span>
+            <span class="inline-block px-3 py-1 bg-green-100 border border-green-300 text-green-700 text-sm font-semibold rounded-full">{{ sentiment.label }}</span>
         {% elif sentiment.label == 'Heated' %}
-            <span class="badge bg-danger">{{ sentiment.label }}</span>
+            <span class="inline-block px-3 py-1 bg-red-100 border border-red-300 text-red-700 text-sm font-semibold rounded-full">{{ sentiment.label }}</span>
         {% else %}
-            <span class="badge bg-secondary">{{ sentiment.label }}</span>
+            <span class="inline-block px-3 py-1 bg-gray-100 border border-gray-300 text-gray-700 text-sm font-semibold rounded-full">{{ sentiment.label }}</span>
         {% endif %}
     </div>
-    <p class="text-muted mt-1 mb-0">
+    <p class="text-gray-600 text-base">
         {{ profile.constituency or '—' }}
-        &nbsp;&middot;&nbsp;
-        <span class="badge bg-light text-dark border">{{ profile.party or '—' }}</span>
+        <span class="mx-2 text-gray-400">•</span>
+        <span class="inline-block px-2.5 py-1 bg-gray-100 text-gray-700 rounded text-sm font-medium">{{ profile.party or '—' }}</span>
     </p>
 </div>
 
-<!-- Stats row -->
-<div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-        <div class="border rounded p-3 text-center">
-            <div class="fs-4 fw-semibold text-success">{{ profile.speech_count }}</div>
-            <div class="text-muted small">Total Speeches</div>
-        </div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="border border-gray-200 rounded-lg p-5 bg-white">
+        <div class="text-3xl font-semibold text-green-600 font-serif">{{ profile.speech_count }}</div>
+        <div class="text-sm text-gray-600 mt-1">Total Speeches</div>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="border rounded p-3 text-center">
-            <div class="fs-4 fw-semibold text-success">{{ "{:,}".format(profile.word_count) }}</div>
-            <div class="text-muted small">Total Words</div>
-        </div>
+    <div class="border border-gray-200 rounded-lg p-5 bg-white">
+        <div class="text-3xl font-semibold text-green-600 font-serif">{{ "{:,}".format(profile.word_count) }}</div>
+        <div class="text-sm text-gray-600 mt-1">Words Spoken</div>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="border rounded p-3 text-center">
-            <div class="fs-4 fw-semibold text-success">{{ profile.sessions_attended }}</div>
-            <div class="text-muted small">Sessions Attended</div>
-        </div>
+    <div class="border border-gray-200 rounded-lg p-5 bg-white">
+        <div class="text-3xl font-semibold text-green-600 font-serif">{{ profile.sessions_attended }}</div>
+        <div class="text-sm text-gray-600 mt-1">Sessions</div>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="border rounded p-3 text-center">
-            <div class="fs-4 fw-semibold text-success">{{ profile.avg_speech_length }}</div>
-            <div class="text-muted small">Avg Speech Length</div>
-        </div>
+    <div class="border border-gray-200 rounded-lg p-5 bg-white">
+        <div class="text-3xl font-semibold text-green-600 font-serif">{{ profile.avg_speech_length }}</div>
+        <div class="text-sm text-gray-600 mt-1">Avg Length</div>
     </div>
 </div>
 
-<div class="row g-4 mb-4">
-
-    <!-- Participation chart -->
-    <div class="col-12 col-md-8">
-        <h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
-            Monthly Participation
-        </h6>
-        <div class="border rounded p-3">
+<!-- Main content grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Participation Chart -->
+    <div class="lg:col-span-2">
+        <div class="border border-gray-200 rounded-lg p-6 bg-white">
+            <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Monthly Participation</h3>
             {% if chart_labels %}
-                <canvas id="participationChart" height="100"></canvas>
+                <canvas id="participationChart" height="80"></canvas>
             {% else %}
-                <p class="text-muted small mb-0">Not enough data to display a chart.</p>
+                <p class="text-gray-600 text-sm text-center py-8">Not enough data to display participation trends.</p>
             {% endif %}
         </div>
     </div>
 
-    <!-- Top sections + topics -->
-    <div class="col-12 col-md-4">
+    <!-- Sidebar Stats -->
+    <div class="space-y-6">
         {% if profile.active_sections %}
-        <h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
-            Most Active In
-        </h6>
-        <ul class="list-group list-group-flush mb-4">
-            {% for section in profile.active_sections %}
-            <li class="list-group-item px-0 d-flex justify-content-between">
-                <span class="text-capitalize">{{ section.section.lower() }}</span>
-                <span class="text-muted small">{{ section.count }}</span>
-            </li>
-            {% endfor %}
-        </ul>
+        <div class="border border-gray-200 rounded-lg p-6 bg-white">
+            <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Active In</h3>
+            <div class="space-y-2">
+                {% for section in profile.active_sections %}
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-700 capitalize">{{ section.section.lower() }}</span>
+                    <span class="font-medium text-green-600">{{ section.count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
         {% endif %}
 
         {% if topics %}
-        <h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
-            Top Topics
-        </h6>
-        <div class="d-flex flex-wrap gap-2">
-            {% for t in topics %}
-            <a href="{{ url_for('topics.topic_detail', topic_name=t.topic) }}"
-               class="badge bg-light text-dark border text-decoration-none text-capitalize">
-                {{ t.topic }}
-                <span class="text-muted ms-1">{{ t.count }}</span>
-            </a>
-            {% endfor %}
+        <div class="border border-gray-200 rounded-lg p-6 bg-white">
+            <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Top Topics</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for t in topics %}
+                <a href="{{ url_for('topics.topic_detail', topic_name=t.topic) }}"
+                   class="inline-block px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors capitalize">
+                    {{ t.topic }}
+                    <span class="text-blue-600 font-semibold ml-1">{{ t.count }}</span>
+                </a>
+                {% endfor %}
+            </div>
         </div>
         {% endif %}
     </div>
-
 </div>
 
-<!-- Recent speeches -->
+<!-- Recent Speeches -->
 {% if profile.recent_speeches %}
-<h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
-    Recent Speeches
-</h6>
-<div class="list-group list-group-flush">
-    {% for speech in profile.recent_speeches %}
-    <div class="list-group-item px-0 py-3">
-        <div class="d-flex justify-content-between mb-1">
-            <span class="text-muted small">{{ speech.date }}</span>
-            <span class="badge bg-light text-dark border small">{{ speech.agenda_item if speech.agenda_item else speech.section }}</span>
+<div>
+    <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Recent Speeches</h3>
+    <div class="space-y-3">
+        {% for speech in profile.recent_speeches %}
+        <div class="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-600">{{ speech.date }}</span>
+                <span class="inline-block px-2.5 py-1 bg-purple-50 border border-purple-200 text-purple-700 text-xs font-medium rounded">{{ speech.agenda_item if speech.agenda_item else speech.section }}</span>
+            </div>
+            <p class="text-gray-700 text-sm leading-relaxed">{{ speech.content[:250] }}{% if speech.content|length > 250 %}…{% endif %}</p>
         </div>
-        <p class="mb-0 text-secondary">{{ speech.content[:250] }}{% if speech.content|length > 250 %}…{% endif %}</p>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
 {% endif %}
 
@@ -142,18 +128,23 @@ new Chart(ctx, {
         datasets: [{
             label: "Speeches",
             data: {{ chart_data | tojson }},
-            borderColor: "#198754",
-            backgroundColor: "rgba(25,135,84,0.1)",
-            tension: 0.3,
+            borderColor: "#22c55e",
+            backgroundColor: "rgba(34, 197, 94, 0.05)",
+            tension: 0.4,
             fill: true,
-            pointRadius: 4,
+            pointRadius: 5,
+            pointBackgroundColor: "#16a34a",
+            pointBorderColor: "white",
+            pointBorderWidth: 2,
         }]
     },
     options: {
         responsive: true,
+        maintainAspectRatio: true,
         plugins: { legend: { display: false } },
         scales: {
-            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: "rgba(0,0,0,0.05)" } },
+            x: { grid: { display: false } }
         }
     }
 });
