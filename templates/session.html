@@ -90,6 +90,24 @@
     </div>
 </div>
 
+<!-- AI Summary block -->
+<div class="border border-gray-200 rounded-xl p-5 mb-8 bg-white" id="ai-block">
+    <div class="flex items-center justify-between mb-2">
+        <h3 class="font-serif text-sm font-semibold text-gray-700">AI Session Summary</h3>
+        <span class="text-xs text-gray-400">Powered by Gemini</span>
+    </div>
+    <div id="ai-summary-text" class="text-sm text-gray-500 leading-relaxed">
+        Click the button below to generate an AI summary of this session.
+    </div>
+    <button
+        id="ai-btn"
+        onclick="generateSummary('session', {{ session.id }})"
+        class="mt-3 text-xs font-medium text-green-600 hover:text-green-700 border border-green-200 hover:border-green-400 px-3 py-1.5 rounded-lg transition-colors"
+    >
+        Generate Summary
+    </button>
+</div>
+
 <!-- Speech Log -->
 <div>
     <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Full Speech Log</h3>
@@ -124,4 +142,33 @@
     {% endif %}
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function generateSummary(entityType, entityId) {
+    const btn = document.getElementById('ai-btn');
+    const textEl = document.getElementById('ai-summary-text');
+
+    btn.disabled = true;
+    btn.textContent = 'Generating…';
+    textEl.textContent = 'Analyzing parliamentary records…';
+
+    try {
+        const response = await fetch(`/${entityType === 'mp' ? 'members' : 'sessions'}/${entityId}/summary`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+        const data = await response.json();
+        textEl.textContent = data.summary;
+        btn.textContent = data.cached ? 'Regenerate' : 'Regenerate';
+        btn.disabled = false;
+    } catch (err) {
+        textEl.textContent = 'Failed to generate summary. Please try again.';
+        btn.textContent = 'Try Again';
+        btn.disabled = false;
+    }
+}
+</script>
 {% endblock %}
