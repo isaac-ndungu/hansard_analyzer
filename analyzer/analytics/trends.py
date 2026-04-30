@@ -8,6 +8,8 @@ from analyzer.database.seed import get_connection
 logger = logging.getLogger(__name__)
 
 
+# Topic Trend
+
 def get_topic_trend(
     topic: str,
     period: str = "monthly",
@@ -16,12 +18,8 @@ def get_topic_trend(
     """
     Returns frequency of a topic over time grouped by month or week.
     Each dict contains: {period: str, count: int}.
-    Ordered by period ascending.
     """
-    if period == "weekly":
-        strftime_format = "%Y-W%W"
-    else:
-        strftime_format = "%Y-%m"
+    strftime_format = "%Y-W%W" if period == "weekly" else "%Y-%m"
 
     conn = get_connection(db_path)
     try:
@@ -46,11 +44,12 @@ def get_topic_trend(
         conn.close()
 
 
+# House Activity Trend
+
 def get_house_activity_trend(db_path: Path = DB_PATH) -> list[dict]:
     """
     Returns total speeches and word count per month across all sessions.
     Each dict contains: {month: str, speech_count: int, word_count: int}.
-    Ordered by month ascending.
     """
     conn = get_connection(db_path)
     try:
@@ -65,7 +64,7 @@ def get_house_activity_trend(db_path: Path = DB_PATH) -> list[dict]:
             JOIN sessions se ON sp.session_id = se.id
             GROUP BY month
             ORDER BY month ASC
-            """,
+            """
         )
         columns = [d[0] for d in cursor.description]
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
@@ -73,11 +72,12 @@ def get_house_activity_trend(db_path: Path = DB_PATH) -> list[dict]:
         conn.close()
 
 
+# MP Participation Trend
+
 def get_participation_trend(member_id: int, db_path: Path = DB_PATH) -> list[dict]:
     """
     Returns monthly speech count for a specific MP.
     Each dict contains: {month: str, count: int}.
-    Ordered by month ascending.
     """
     conn = get_connection(db_path)
     try:
@@ -101,17 +101,18 @@ def get_participation_trend(member_id: int, db_path: Path = DB_PATH) -> list[dic
         conn.close()
 
 
-def get_trending_topics(days: int = 30, db_path: Path = DB_PATH) -> list[dict]:
+# Trending Topics
+
+def get_trending_topics(days: int = 30, limit: int = 10, db_path: Path = DB_PATH) -> list[dict]:
     """
-    Returns the top 10 most discussed topics in the last N days.
+    Returns the most discussed topics in the last N days, up to the given limit.
     Each dict contains: {topic: str, count: int}.
-    Ordered by count descending.
     """
     conn = get_connection(db_path)
     try:
         cursor = conn.cursor()
         cursor.execute(
-            """
+            f"""
             SELECT
                 st.topic,
                 COUNT(*) AS count
@@ -121,7 +122,7 @@ def get_trending_topics(days: int = 30, db_path: Path = DB_PATH) -> list[dict]:
             WHERE se.date >= date('now', ? || ' days')
             GROUP BY st.topic
             ORDER BY count DESC
-            LIMIT 10
+            LIMIT {int(limit)}
             """,
             (f"-{days}",),
         )
@@ -131,11 +132,12 @@ def get_trending_topics(days: int = 30, db_path: Path = DB_PATH) -> list[dict]:
         conn.close()
 
 
+# All Sessions List
+
 def get_all_sessions_list(db_path: Path = DB_PATH) -> list[dict]:
     """
-    Returns all sessions ordered by date descending, with speech count per session.
-    Each dict contains: {id, date, chamber, volume, issue, speech_count}.
-    Used by the sessions list page.
+    Returns all sessions ordered by date descending with speech count per session.
+    Each dict contains: {id, date, chamber, volume, issue, session_time, speech_count}.
     """
     conn = get_connection(db_path)
     try:
@@ -148,12 +150,13 @@ def get_all_sessions_list(db_path: Path = DB_PATH) -> list[dict]:
                 se.chamber,
                 se.volume,
                 se.issue,
+                se.session_time,
                 COUNT(sp.id) AS speech_count
             FROM sessions se
             LEFT JOIN speeches sp ON sp.session_id = se.id
             GROUP BY se.id
             ORDER BY se.date DESC
-            """,
+            """
         )
         columns = [d[0] for d in cursor.description]
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
@@ -161,17 +164,19 @@ def get_all_sessions_list(db_path: Path = DB_PATH) -> list[dict]:
         conn.close()
 
 
+# Recent Sessions
+
 def get_recent_sessions(limit: int = 5, db_path: Path = DB_PATH) -> list[dict]:
     """
-    Returns the N most recent sessions for display on the homepage.
-    Each dict contains: {id, date, chamber, volume, issue}.
+    Returns the N most recent sessions for the homepage latest sessions list.
+    Each dict contains: {id, date, chamber, volume, issue, session_time}.
     """
     conn = get_connection(db_path)
     try:
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT id, date, chamber, volume, issue
+            SELECT id, date, chamber, volume, issue, session_time
             FROM sessions
             ORDER BY date DESC
             LIMIT ?

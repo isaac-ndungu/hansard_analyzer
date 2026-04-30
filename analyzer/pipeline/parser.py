@@ -11,7 +11,13 @@ logger = logging.getLogger(__name__)
 
 
 # Speaker Patterns
-
+#
+# Two formats exist in Hansard PDFs:
+#   Standard:  Hon. Name (Constituency, Party): content
+#   Titled:    Hon. (Dr) Name (Constituency, Party): content
+#
+# The Temporary Speaker and Hon. Speaker entries are procedural chair
+# interventions and are excluded from speech records.
 
 _SPEECH_LOOKAHEAD = r"(?=Hon\.\s+(?:\([^)]+\)\s+)?[^(\n]+\(|The (?:Temporary )?Speaker\s*\(|$)"
 
@@ -30,14 +36,14 @@ SECTION_PATTERN = re.compile(
     re.MULTILINE | re.IGNORECASE,
 )
 
-# Ordinal suffix (st, nd, rd, th) is optional — real PDFs use "11th March"
+# Date Pattern
 DATE_PATTERN = re.compile(
     r"(?:Monday|Tuesday|Wednesday|Thursday|Friday),\s+"
     r"(\d{1,2})(?:st|nd|rd|th)?\s+(\w+),?\s+(\d{4})",
     re.IGNORECASE,
 )
 
-# Volume uses Roman numerals: "Vol. V No. 17"
+# Volume Pattern
 VOLUME_PATTERN = re.compile(
     r"Vol\.\s+([IVXLCDM]+)\s+No\.\s+(\d+)",
     re.IGNORECASE,
@@ -252,7 +258,8 @@ def parse_document(pdf_path: Path) -> dict:
 
     sections = parse_sections(text)
     speakers = parse_speakers(text)
-    speeches = _assign_sections_to_speeches(text, sections, speakers)
+    speeches_with_sections = _assign_sections_to_speeches(text, sections, speakers)
+    speeches = assign_agenda_items_to_speeches(text, speeches_with_sections)
 
     return {
         "date": _extract_date(text),
@@ -298,5 +305,84 @@ def _assign_sections_to_speeches(
                 break
 
         result.append({**speech, "section": active_section})
+
+    return result
+
+
+# Agenda Item Extraction
+
+_AGENDA_PATTERNS = [
+    re.compile(
+        r"(THE\s+[A-Z][A-Z\s\(\)\/\-]+(?:BILL|ACT))\s*\n\s*\((?:National Assembly|Senate) Bill",
+        re.MULTILINE,
+    ),
+    re.compile(
+        r"^(APPROVAL\s+OF\s+[A-Z][A-Z\s\(\)\/\-\,]+|ADOPTION\s+OF\s+[A-Z][A-Z\s\(\)\/\-\,]+)$",
+        re.MULTILINE,
+    ),
+    re.compile(
+        r"^STATEMENT\s*\n([A-Z][A-Z\s\(\)\/\-\,]{10,})$",
+        re.MULTILINE,
+    ),
+    re.compile(
+        r"Question\s+\d+/\d+\s*\n([A-Z][A-Z\s\(\)\/\-\,]{8,})$",
+        re.MULTILINE,
+    ),
+    re.compile(
+        r"^REQUEST FOR STATEMENT\s*\n([A-Z][A-Z\s\(\)\/\-\,]{8,})$",
+        re.MULTILINE,
+    ),
+]
+
+
+def extract_agenda_items(text: str) -> list[tuple[int, str]]:
+    """
+    Scans document text and returns all agenda items found — bills, motions,
+    statements and questions — as (position, title) pairs sorted by position.
+
+    Each pair represents the character position in the full text where the
+    agenda item title was found, and the cleaned title string.
+    """
+    found = []
+
+    for pattern in _AGENDA_PATTERNS:
+        for match in pattern.finditer(text):
+            title = (match.group(1) if match.lastindex else match.group()).strip()
+            title = re.sub(r"\s+", " ", title)
+            found.append((match.start(), title))
+
+    found.sort(key=lambda pair: pair[0])
+    return found
+
+
+def assign_agenda_items_to_speeches(
+    full_text: str,
+    speeches: list[dict],
+) -> list[dict]:
+    """
+    Assigns each speech the agenda item it falls under.
+
+    A speech belongs to the most recent agenda item that started before
+    the speech's position in the document. Speeches that precede the first
+    agenda item (e.g. procedural PAPERS entries) receive None.
+    """
+    agenda_items = extract_agenda_items(full_text)
+
+    if not agenda_items:
+        return [{**speech, "agenda_item": None} for speech in speeches]
+
+    result = []
+
+    for speech in speeches:
+        content_pos = full_text.find(speech["content"][:80])
+        active_item = None
+
+        for item_pos, item_title in agenda_items:
+            if content_pos >= item_pos:
+                active_item = item_title
+            else:
+                break
+
+        result.append({**speech, "agenda_item": active_item})
 
     return result

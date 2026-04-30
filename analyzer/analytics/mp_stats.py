@@ -1,10 +1,14 @@
 import sqlite3
+import logging
 from pathlib import Path
-from typing import Optional
 
 from config import DB_PATH
 from analyzer.database.seed import get_connection
 
+logger = logging.getLogger(__name__)
+
+
+# MP Speech Count
 
 def get_mp_speech_count(member_id: int, db_path: Path = DB_PATH) -> int:
     """Returns total number of speeches given by this MP across all sessions."""
@@ -19,6 +23,7 @@ def get_mp_speech_count(member_id: int, db_path: Path = DB_PATH) -> int:
     finally:
         conn.close()
 
+# MP Word Count
 
 def get_mp_word_count(member_id: int, db_path: Path = DB_PATH) -> int:
     """Returns total words spoken by this MP across all sessions."""
@@ -34,6 +39,8 @@ def get_mp_word_count(member_id: int, db_path: Path = DB_PATH) -> int:
         conn.close()
 
 
+# MP Sessions Attended
+
 def get_mp_sessions_attended(member_id: int, db_path: Path = DB_PATH) -> int:
     """Returns number of unique sessions where this MP gave at least one speech."""
     conn = get_connection(db_path)
@@ -47,6 +54,8 @@ def get_mp_sessions_attended(member_id: int, db_path: Path = DB_PATH) -> int:
     finally:
         conn.close()
 
+
+# MP Average Speech Length
 
 def get_mp_avg_speech_length(member_id: int, db_path: Path = DB_PATH) -> float:
     """Returns average word count per speech for this MP, rounded to 2 decimal places."""
@@ -62,6 +71,8 @@ def get_mp_avg_speech_length(member_id: int, db_path: Path = DB_PATH) -> float:
     finally:
         conn.close()
 
+
+# MP Active Sections
 
 def get_mp_active_sections(member_id: int, db_path: Path = DB_PATH) -> list[dict]:
     """Returns the top 5 sections this MP speaks in most frequently, ordered by count descending."""
@@ -84,6 +95,8 @@ def get_mp_active_sections(member_id: int, db_path: Path = DB_PATH) -> list[dict
     finally:
         conn.close()
 
+
+# MP Activity Over Time
 
 def get_mp_activity_over_time(member_id: int, db_path: Path = DB_PATH) -> list[dict]:
     """Returns monthly speech count for this MP, ordered by month ascending."""
@@ -109,6 +122,8 @@ def get_mp_activity_over_time(member_id: int, db_path: Path = DB_PATH) -> list[d
         conn.close()
 
 
+# Most Active MPs
+
 def get_most_active_mps(limit: int = 10, db_path: Path = DB_PATH) -> list[dict]:
     """Returns top N MPs by total speech count, ordered by speech count descending."""
     conn = get_connection(db_path)
@@ -121,7 +136,7 @@ def get_most_active_mps(limit: int = 10, db_path: Path = DB_PATH) -> list[dict]:
                 m.name,
                 m.constituency,
                 m.party,
-                COUNT(sp.id)            AS speech_count,
+                COUNT(sp.id)                    AS speech_count,
                 COALESCE(SUM(sp.word_count), 0) AS word_count
             FROM members m
             LEFT JOIN speeches sp ON sp.member_id = m.id
@@ -137,12 +152,14 @@ def get_most_active_mps(limit: int = 10, db_path: Path = DB_PATH) -> list[dict]:
         conn.close()
 
 
+# MP Recent Speeches
+
 def get_mp_recent_speeches(
     member_id: int,
     limit: int = 5,
     db_path: Path = DB_PATH,
 ) -> list[dict]:
-    """Returns the most recent N speeches by this MP, with session date and section."""
+    """Returns the most recent N speeches by this MP with session date and section."""
     conn = get_connection(db_path)
     try:
         cursor = conn.cursor()
@@ -153,6 +170,7 @@ def get_mp_recent_speeches(
                 sp.content,
                 sp.word_count,
                 sp.section,
+                sp.agenda_item,
                 sp.sentiment_score,
                 se.date
             FROM speeches sp
@@ -169,11 +187,10 @@ def get_mp_recent_speeches(
         conn.close()
 
 
+# MP Full Profile
+
 def get_mp_full_profile(member_id: int, db_path: Path = DB_PATH) -> dict:
-    """
-    Aggregates all MP metrics into a single dict for use in Flask routes.
-    Returns an empty dict if the member does not exist.
-    """
+    """Aggregates all MP metrics into a single dict for use in Flask routes."""
     conn = get_connection(db_path)
     try:
         cursor = conn.cursor()

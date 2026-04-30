@@ -11,6 +11,7 @@ from analyzer.database.queries import (
 )
 from analyzer.pipeline.parser import parse_document
 from analyzer.pipeline.normalizer import normalize
+from analyzer.analytics.topics import classify_speech_topics, derive_topics_from_agenda_item
 
 logger = logging.getLogger(__name__)
 
@@ -90,17 +91,24 @@ def run_pipeline(pdf_path: Path) -> int:
             session_id=session_id,
             member_id=member_id,
             section=speech["section"],
+            agenda_item=speech.get("agenda_item"),
             content=speech["content"],
             word_count=speech["word_count"],
         )
 
-        # Store extracted topics
-        for topic_data in speech.get("topics", []):
+        agenda_item = speech.get("agenda_item")
+
+        if agenda_item:
+            topics = derive_topics_from_agenda_item(agenda_item)
+        else:
+            topics = classify_speech_topics(speech["content"])
+
+        for topic_result in topics:
             insert_speech_topic(
                 conn,
                 speech_id=speech_id,
-                topic=topic_data["topic"],
-                confidence=topic_data["confidence"],
+                topic=topic_result["topic"],
+                confidence=topic_result["confidence"],
             )
 
         stored_count += 1

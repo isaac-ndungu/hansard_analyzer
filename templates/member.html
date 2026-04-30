@@ -121,7 +121,7 @@
     <div class="list-group-item px-0 py-3">
         <div class="d-flex justify-content-between mb-1">
             <span class="text-muted small">{{ speech.date }}</span>
-            <span class="badge bg-light text-dark border small">{{ speech.section }}</span>
+            <span class="badge bg-light text-dark border small">{{ speech.agenda_item if speech.agenda_item else speech.section }}</span>
         </div>
         <p class="mb-0 text-secondary">{{ speech.content[:250] }}{% if speech.content|length > 250 %}…{% endif %}</p>
     </div>

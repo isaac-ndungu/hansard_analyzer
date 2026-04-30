@@ -43,16 +43,10 @@ def get_session_by_date_and_time(
     session_time: Optional[str],
 ) -> Optional[dict]:
     cursor = conn.cursor()
-    if session_time is None:
-        cursor.execute(
-            "SELECT * FROM sessions WHERE date = ? AND session_time IS NULL",
-            (date,),
-        )
-    else:
-        cursor.execute(
-            "SELECT * FROM sessions WHERE date = ? AND session_time = ?",
-            (date, session_time),
-        )
+    cursor.execute(
+        "SELECT * FROM sessions WHERE date = ? AND session_time IS ?",
+        (date, session_time),
+    )
     row = cursor.fetchone()
     if row is None:
         return None
@@ -124,6 +118,7 @@ def insert_speech(
     session_id: int,
     member_id: int,
     section: str,
+    agenda_item: Optional[str],
     content: str,
     word_count: int,
     sentiment_score: Optional[float] = None,
@@ -131,13 +126,14 @@ def insert_speech(
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT INTO speeches (session_id, member_id, section, content, word_count, sentiment_score, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO speeches (session_id, member_id, section, agenda_item, content, word_count, sentiment_score, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             session_id,
             member_id,
             section,
+            agenda_item,
             content,
             word_count,
             sentiment_score,

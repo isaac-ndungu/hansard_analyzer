@@ -49,6 +49,20 @@
 
 <div class="row g-4 mb-5">
 
+    <!-- Agenda items covered -->
+    <div class="col-12 col-md-6">
+        <h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
+            Agenda Items
+        </h6>
+        <div class="d-flex flex-wrap gap-2">
+            {% for item in agenda_items %}
+            <span class="badge bg-light text-dark border">
+                {{ item }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+
     <!-- Sections covered -->
     <div class="col-12 col-md-6">
         <h6 class="text-uppercase text-muted fw-semibold small letter-spacing mb-3">
@@ -100,8 +114,8 @@
                 <span class="text-muted small ms-2">{{ speech.constituency }}</span>
                 <span class="badge bg-light text-dark border small ms-1">{{ speech.party }}</span>
             </div>
-            <span class="badge bg-light text-dark border small text-capitalize">
-                {{ speech.section.lower() if speech.section else '' }}
+            <span class="badge bg-light text-dark border small">
+                {{ speech.agenda_item if speech.agenda_item else (speech.section.lower() if speech.section else '') }}
             </span>
         </div>
         <p class="mb-0 text-secondary speech-content">{{ speech.content }}</p>

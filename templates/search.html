@@ -61,8 +61,8 @@
                 </div>
                 <div class="d-flex gap-2 align-items-center">
                     <span class="text-muted small">{{ result.date }}</span>
-                    <span class="badge bg-light text-dark border small text-capitalize">
-                        {{ result.section.lower() if result.section else '' }}
+                    <span class="badge bg-light text-dark border small">
+                        {{ result.agenda_item if result.agenda_item else (result.section.lower() if result.section else '') }}
                     </span>
                     <a href="{{ url_for('sessions.session_detail', session_id=result.session_id) }}"
                        class="btn btn-sm btn-outline-secondary py-0">

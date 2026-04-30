@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS speeches (
     session_id      INTEGER NOT NULL REFERENCES sessions(id),
     member_id       INTEGER NOT NULL REFERENCES members(id),
     section         TEXT,
+    agenda_item     TEXT,
     content         TEXT NOT NULL,
     word_count      INTEGER,
     sentiment_score REAL,

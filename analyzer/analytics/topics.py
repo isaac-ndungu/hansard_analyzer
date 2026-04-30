@@ -1,9 +1,8 @@
 import re
 import logging
-import sqlite3
 from collections import defaultdict
 
-from config import TOPIC_MAP, DB_PATH
+from config import TOPIC_MAP
 
 logger = logging.getLogger(__name__)
 
@@ -96,12 +95,11 @@ def get_topic_frequency(
 
 # MP Topic Profile
 
-def get_mp_topics(member_id: int, db_path=DB_PATH) -> list[dict]:
+def get_mp_topics(conn, member_id: int) -> list[dict]:
     """
     Returns all topics associated with a given member's speeches,
     ordered by frequency of appearance.
     """
-    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -115,9 +113,7 @@ def get_mp_topics(member_id: int, db_path=DB_PATH) -> list[dict]:
         (member_id,),
     )
     columns = [d[0] for d in cursor.description]
-    result = [dict(zip(columns, row)) for row in cursor.fetchall()]
-    conn.close()
-    return result
+    return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 
 # Trending Topics
@@ -142,3 +138,38 @@ def get_trending_topics(conn, days: int = 30) -> list[dict]:
     )
     columns = [d[0] for d in cursor.description]
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+
+# Agenda Item Topic Derivation
+
+def derive_topics_from_agenda_item(agenda_item: str) -> list[dict]:
+    """
+    Derives topic tags by matching the agenda item title against the TOPIC_MAP.
+    This is more accurate than scanning full speech content because the title
+    is a precise descriptor of what is being debated.
+
+    Returns the same structure as classify_speech_topics so the pipeline
+    can treat both interchangeably.
+    """
+    if not agenda_item:
+        return []
+
+    title_lower = agenda_item.lower()
+    results = []
+
+    for topic, keywords in TOPIC_MAP.items():
+        matched = [kw for kw in keywords if kw.lower() in title_lower]
+
+        if matched:
+            confidence = round(len(matched) / len(keywords), 2)
+            results.append({
+                "topic": topic,
+                "confidence": confidence,
+                "matches": matched,
+            })
+
+    if not results:
+        results = classify_speech_topics(agenda_item)
+
+    results.sort(key=lambda r: r["confidence"], reverse=True)
+    return results
