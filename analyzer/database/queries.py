@@ -445,22 +445,68 @@ def get_or_create_bill(
     bill_number: Optional[str] = None,
     bill_year: Optional[int] = None,
     introduced_date: Optional[str] = None,
+    sponsor_id: Optional[int] = None,
 ) -> int:
-    """Returns existing bill id if title matches, otherwise creates a new record."""
+    """Returns existing bill id if title matches, otherwise creates a new record.
+
+    If an existing bill is found, missing metadata is updated when available.
+    """
     cursor = conn.cursor()
-    cursor.execute("SELECT id FROM bills WHERE title = ?", (title,))
+    cursor.execute(
+        "SELECT id, agenda_item_id, bill_number, bill_year, introduced_date, sponsor_id "
+        "FROM bills WHERE title = ?",
+        (title,),
+    )
     row = cursor.fetchone()
     if row:
-        return row[0]
+        (
+            bill_id,
+            existing_agenda_item_id,
+            existing_bill_number,
+            existing_bill_year,
+            existing_introduced_date,
+            existing_sponsor_id,
+        ) = row
+        updates = []
+        params = []
+
+        if agenda_item_id is not None and existing_agenda_item_id is None:
+            updates.append("agenda_item_id = ?")
+            params.append(agenda_item_id)
+        if bill_number and not existing_bill_number:
+            updates.append("bill_number = ?")
+            params.append(bill_number)
+        if bill_year is not None and not existing_bill_year:
+            updates.append("bill_year = ?")
+            params.append(bill_year)
+        if introduced_date and not existing_introduced_date:
+            updates.append("introduced_date = ?")
+            params.append(introduced_date)
+            updates.append("last_activity = ?")
+            params.append(introduced_date)
+        if sponsor_id is not None and existing_sponsor_id is None:
+            updates.append("sponsor_id = ?")
+            params.append(sponsor_id)
+
+        if updates:
+            params.append(bill_id)
+            cursor.execute(
+                f"UPDATE bills SET {', '.join(updates)} WHERE id = ?",
+                params,
+            )
+            conn.commit()
+
+        return bill_id
+
     cursor.execute(
         """
         INSERT INTO bills
             (agenda_item_id, bill_number, bill_year, title,
-             current_status, introduced_date, last_activity)
-        VALUES (?, ?, ?, ?, 'In Progress', ?, ?)
+             sponsor_id, current_status, introduced_date, last_activity)
+        VALUES (?, ?, ?, ?, ?, 'In Progress', ?, ?)
         """,
         (agenda_item_id, bill_number, bill_year, title,
-         introduced_date, introduced_date),
+         sponsor_id, introduced_date, introduced_date),
     )
     conn.commit()
     return cursor.lastrowid

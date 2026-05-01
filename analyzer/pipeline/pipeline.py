@@ -7,6 +7,7 @@ from analyzer.database.queries import (
     insert_session,
     get_session_by_date_and_time,
     get_or_create_member,
+    get_member_by_name,
     insert_speech,
     insert_agenda_item,
     insert_agenda_item_topic,
@@ -15,7 +16,11 @@ from analyzer.database.queries import (
 )
 from analyzer.pipeline.parser import parse_document, extract_text, extract_agenda_items
 from analyzer.pipeline.normalizer import normalize
-from analyzer.pipeline.bill_parser import extract_bills, extract_bill_metadata
+from analyzer.pipeline.bill_parser import (
+    extract_bills,
+    extract_bill_metadata,
+    extract_bill_sponsor,
+)
 from analyzer.analytics.topics import classify_agenda_title
 
 logger = logging.getLogger(__name__)
@@ -42,38 +47,47 @@ def _find_agenda_item_id(
     if not agenda_items_map:
         return None
 
-    section_to_type = {
-        "BILLS":      "BILL",
-        "MOTIONS":    "MOTION",
-        "PETITIONS":  "PETITION",
-        "STATEMENTS": "STATEMENT",
-        "QUESTIONS":  "QUESTION",
-        "PAPERS":     "PAPER",
+    section_to_types = {
+        "BILLS":      ["BILL"],
+        "MOTIONS":    ["MOTION", "BILL"],
+        "PETITIONS":  ["PETITION"],
+        "STATEMENTS": ["STATEMENT"],
+        "QUESTIONS":  ["QUESTION"],
+        "PAPERS":     ["PAPER"],
     }
 
     section_upper = (speech_section or "").upper()
-    target_type = None
+    target_types = None
 
-    for section_key, item_type in section_to_type.items():
+    for section_key, item_types in section_to_types.items():
         if section_key in section_upper:
-            target_type = item_type
+            target_types = item_types
             break
 
-    if target_type is None:
+    if target_types is None:
         return None
 
     content_lower = (speech_content or "").lower()
     last_match = None
 
     for aid, item in agenda_items_map.items():
-        if item["type"] != target_type:
+        if item["type"] not in target_types:
             continue
         last_match = aid
         title_words = [w for w in item["title"].lower().split() if len(w) > 4]
         if title_words and any(word in content_lower for word in title_words):
             return aid
 
-    return last_match
+    if last_match is not None:
+        return last_match
+
+    # Fallback: if no agenda item was matched by section/type, attempt a title keyword match
+    for aid, item in agenda_items_map.items():
+        title_words = [w for w in item["title"].lower().split() if len(w) > 4]
+        if title_words and any(word in content_lower for word in title_words):
+            return aid
+
+    return None
 
 
 # Pipeline Orchestration
@@ -151,18 +165,9 @@ def run_pipeline(pdf_path: Path) -> int:
         agenda_items_map[aid] = {
             "title": item_dict["title"],
             "type": item_dict["type"],
+            "raw_heading": item_dict["raw_heading"],
+            "position": item_dict["position"],
         }
-
-        if item_dict["type"] == "BILL":
-            bill_number, bill_year = extract_bill_metadata(item_dict["raw_heading"])
-            get_or_create_bill(
-                conn,
-                title=item_dict["title"],
-                agenda_item_id=aid,
-                bill_number=bill_number,
-                bill_year=bill_year,
-                introduced_date=normalized["date"],
-            )
 
         topics = classify_agenda_title(item_dict["title"])
         for tm in topics:
@@ -200,6 +205,37 @@ def run_pipeline(pdf_path: Path) -> int:
             word_count=speech["word_count"],
         )
         stored_count += 1
+
+    # Create bill rows for every agenda item typed as BILL.
+    # Sponsor is inferred from the first speech under that agenda item.
+    for aid, item in agenda_items_map.items():
+        if item["type"] != "BILL":
+            continue
+
+        sponsor_name = extract_bill_sponsor(raw_text, item["position"])
+        sponsor_id = None
+
+        if sponsor_name:
+            member = get_member_by_name(conn, sponsor_name)
+            sponsor_id = member["id"] if member else None
+
+        if sponsor_id is None:
+            sponsor_row = conn.execute(
+                "SELECT member_id FROM speeches WHERE agenda_item_id = ? ORDER BY id ASC LIMIT 1",
+                (aid,),
+            ).fetchone()
+            sponsor_id = sponsor_row[0] if sponsor_row else None
+
+        bill_number, bill_year = extract_bill_metadata(item["raw_heading"])
+        get_or_create_bill(
+            conn,
+            title=item["title"],
+            agenda_item_id=aid,
+            bill_number=bill_number,
+            bill_year=bill_year,
+            introduced_date=normalized["date"],
+            sponsor_id=sponsor_id,
+        )
 
     bills = extract_bills(raw_text)
     for bill_data in bills:

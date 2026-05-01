@@ -16,6 +16,16 @@ BILL_TITLE_PATTERN = re.compile(
     re.MULTILINE,
 )
 
+SPONSOR_PATTERN = re.compile(
+    r"\(Moved by Hon\.\s+([^()]+?)(?:\s+on\s+[^)]+)?\)",
+    re.IGNORECASE,
+)
+
+BEG_TO_MOVE_PATTERN = re.compile(
+    r"Hon\.\s+([^\(\n]+?)\s*\([^)]*\):.*?\bI beg to move\b",
+    re.IGNORECASE | re.DOTALL,
+)
+
 
 def extract_bill_metadata(text: str) -> tuple[Optional[str], Optional[int]]:
     """Parses bill number and year from an agenda heading or bill title."""
@@ -23,6 +33,29 @@ def extract_bill_metadata(text: str) -> tuple[Optional[str], Optional[int]]:
     if not match:
         return None, None
     return match.group(1), int(match.group(2))
+
+
+def extract_bill_sponsor(text: str, position: int | None = None) -> Optional[str]:
+    """Extracts the sponsor name for a bill from surrounding Hansard text."""
+    if not text:
+        return None
+
+    if position is None:
+        snippet = text
+    else:
+        start = max(0, position - 100)
+        end = min(len(text), position + 800)
+        snippet = text[start:end]
+
+    match = SPONSOR_PATTERN.search(snippet)
+    if match:
+        return match.group(1).strip()
+
+    match = BEG_TO_MOVE_PATTERN.search(snippet)
+    if match:
+        return match.group(1).strip()
+
+    return None
 
 
 READING_PATTERNS = {

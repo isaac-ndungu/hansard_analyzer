@@ -118,6 +118,73 @@ class TestGetOrCreateMember:
         assert row[0] == "ODM"
 
 
+class TestGetOrCreateBill:
+    def test_creates_bill_record_for_title(self, conn):
+        conn.execute(
+            """
+            CREATE TABLE bills (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agenda_item_id INTEGER,
+                bill_number TEXT,
+                bill_year INTEGER,
+                title TEXT NOT NULL,
+                current_status TEXT,
+                introduced_date TEXT,
+                last_activity TEXT
+            )
+            """
+        )
+        from analyzer.database.queries import get_or_create_bill
+        bill_id = get_or_create_bill(
+            conn,
+            title="Quality Healthcare and Patient Safety Bill",
+            agenda_item_id=1,
+            bill_number="8",
+            bill_year=2026,
+            introduced_date="2026-04-14",
+        )
+        assert isinstance(bill_id, int)
+        row = conn.execute("SELECT bill_number, bill_year FROM bills WHERE id = ?", (bill_id,)).fetchone()
+        assert row == ("8", 2026)
+
+    def test_updates_existing_bill_with_missing_metadata(self, conn):
+        conn.execute(
+            """
+            CREATE TABLE bills (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agenda_item_id INTEGER,
+                bill_number TEXT,
+                bill_year INTEGER,
+                title TEXT NOT NULL,
+                current_status TEXT,
+                introduced_date TEXT,
+                last_activity TEXT
+            )
+            """
+        )
+        from analyzer.database.queries import get_or_create_bill
+        bill_id = get_or_create_bill(
+            conn,
+            title="Quality Healthcare and Patient Safety Bill",
+            agenda_item_id=1,
+            bill_number=None,
+            bill_year=None,
+            introduced_date="2026-04-14",
+        )
+        assert bill_id > 0
+        updated_id = get_or_create_bill(
+            conn,
+            title="Quality Healthcare and Patient Safety Bill",
+            agenda_item_id=1,
+            bill_number="8",
+            bill_year=2026,
+            introduced_date="2026-04-14",
+        )
+        assert updated_id == bill_id
+        row = conn.execute("SELECT bill_number, bill_year FROM bills WHERE id = ?", (bill_id,)).fetchone()
+        assert row == ("8", 2026)
+
+
 class TestGetAllMembers:
     def test_returns_list(self, conn):
         from analyzer.database.queries import get_all_members

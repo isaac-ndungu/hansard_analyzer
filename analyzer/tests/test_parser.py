@@ -1,4 +1,5 @@
 import pytest
+from analyzer.pipeline.bill_parser import extract_bill_metadata
 from analyzer.pipeline.parser import (
     parse_speakers,
     parse_sections,
@@ -102,3 +103,15 @@ class TestParseSections:
         result = parse_sections(text)
         assert len(result) == 1
         assert "budget allocation" in result[0]["content"]
+
+
+class TestBillParser:
+
+    def test_extracts_bill_number_and_year_from_raw_heading(self):
+        raw_heading = (
+            "THE QUALITY HEALTHCARE AND PATIENT SAFETY BILL\n"
+            "(National Assembly Bill No.8 of 2026)"
+        )
+        bill_number, bill_year = extract_bill_metadata(raw_heading)
+        assert bill_number == "8"
+        assert bill_year == 2026
