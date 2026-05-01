@@ -11,35 +11,6 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['DM Sans', 'sans-serif'],
-                        serif: ['Spectral', 'serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50:  '#f0fdf4',
-                            100: '#dcfce7',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            700: '#15803d',
-                            800: '#166534',
-                            900: '#14532d',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-
-    <style>
-        body { font-family: 'DM Sans', sans-serif; }
-        h1, h2, h3, h4, h5, h6 { font-family: 'Spectral', serif; }
-        .speech-content { line-height: 1.75; }
-    </style>
 </head>
 
 <body class=" text-stone-900 min-h-screen flex flex-col">
@@ -68,7 +39,7 @@
                 <a href="{{ url_for('home.about') }}"
                    class="hover:text-white transition-colors">About</a>
                 <span class="bg-green-800 text-green-100 text-xs font-medium px-2 py-0.5 rounded-full">
-                    Kenya Parliament
+                    Kenya National Assembly 
                 </span>
             </div>
 
