@@ -506,9 +506,9 @@ def assign_agenda_items_to_speeches(
         content_pos = full_text.find(speech["content"][:80])
         active_item = None
 
-        for item_pos, item_title in agenda_items:
-            if content_pos >= item_pos:
-                active_item = item_title
+        for item in agenda_items:
+            if content_pos >= item["position"]:
+                active_item = item["title"]
             else:
                 break
 

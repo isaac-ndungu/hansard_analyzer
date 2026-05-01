@@ -129,27 +129,30 @@ def insert_speech(
     conn: sqlite3.Connection,
     session_id: int,
     member_id: int,
+    agenda_item_id: Optional[int],
     section: str,
-    agenda_item: Optional[str],
     content: str,
     word_count: int,
     sentiment_score: Optional[float] = None,
 ) -> int:
+    """Inserts a speech record linked to an agenda item via foreign key."""
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT INTO speeches (session_id, member_id, section, agenda_item, content, word_count, sentiment_score, created_at)
+        INSERT INTO speeches
+            (session_id, member_id, agenda_item_id, section, content,
+             word_count, sentiment_score, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             session_id,
             member_id,
+            agenda_item_id,
             section,
-            agenda_item,
             content,
             word_count,
             sentiment_score,
-            datetime.now(timezone.utc).isoformat(),
+            datetime.utcnow().isoformat(),
         ),
     )
     conn.commit()
@@ -644,5 +647,5 @@ def get_database_stats(conn: sqlite3.Connection) -> dict:
                   "agenda_item_topics", "bills"):
         cursor.execute(f"SELECT COUNT(*) FROM {table}")
         stats[table] = cursor.fetchone()[0]
-        
+
     return stats
