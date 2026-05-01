@@ -334,27 +334,156 @@ _AGENDA_PATTERNS = [
     ),
 ]
 
+# Agenda Item Type Classification
+AGENDA_TYPE_PATTERNS = {
+    "BILL": [
+        r"\bBILL\b",
+        r"\bAMENDMENT\b",
+    ],
+    "MOTION": [
+        r"\bMOTION\b",
+        r"\bADOPTION\b",
+        r"\bAPPROVAL\b",
+        r"\bSENATE AMENDMENTS\b",
+    ],
+    "PETITION": [
+        r"\bPETITION\b",
+    ],
+    "STATEMENT": [
+        r"\bSTATEMENT\b",
+    ],
+    "QUESTION": [
+        r"\bQUESTION\b",
+        r"\bREQUEST FOR STATEMENT\b",
+    ],
+    "PAPER": [
+        r"\bPAPERS?\b",
+    ],
+}
 
-def extract_agenda_items(text: str) -> list[tuple[int, str]]:
+SECTION_DIVIDER_HEADINGS = {
+    "PRAYERS",
+    "ADJOURNMENT",
+    "QUORUM",
+    "POINT OF ORDER",
+    "PERSONAL STATEMENT",
+    "COMMUNICATION FROM THE CHAIR",
+    "QUESTIONS AND STATEMENTS",
+    "REQUESTS FOR STATEMENTS",
+    "IN THE COMMITTEE",
+    "IN THE HOUSE",
+    "SECOND READING",
+    "THIRD READING",
+    "COMMITTEE OF THE WHOLE HOUSE",
+    "NATIONAL ASSEMBLY",
+    "REPUBLIC OF KENYA",
+    "THE HANSARD",
+    "THIRTEENTH PARLIAMENT",
+}
+
+
+def classify_agenda_type(heading: str) -> str:
     """
-    Scans document text and returns all agenda items found — bills, motions,
-    statements and questions — as (position, title) pairs sorted by position.
-
-    Each pair represents the character position in the full text where the
-    agenda item title was found, and the cleaned title string.
+    Classifies an agenda item heading into a structural type.
+    Returns one of: BILL, MOTION, PETITION, STATEMENT, QUESTION, PAPER, OTHER
     """
-    found = []
-
-    for pattern in _AGENDA_PATTERNS:
-        for match in pattern.finditer(text):
-            title = (match.group(1) if match.lastindex else match.group()).strip()
-            title = re.sub(r"\s+", " ", title)
-            found.append((match.start(), title))
-
-    found.sort(key=lambda pair: pair[0])
-    return found
+    heading_upper = heading.upper()
+    for item_type, patterns in AGENDA_TYPE_PATTERNS.items():
+        for pattern in patterns:
+            if re.search(pattern, heading_upper):
+                return item_type
+    return "OTHER"
 
 
+def is_section_divider(heading: str) -> bool:
+    """
+    Returns True if the heading is a broad procedural divider rather than
+    a specific agenda item. Section dividers should not become agenda items.
+    """
+    return heading.strip().upper() in SECTION_DIVIDER_HEADINGS
+
+
+def clean_agenda_title(raw_heading: str) -> str:
+    """
+    Converts a raw ALL CAPS Hansard heading into a readable title.
+
+    Examples:
+      'THE QUALITY HEALTHCARE AND PATIENT SAFETY BILL' ->
+      'Quality Healthcare and Patient Safety Bill'
+
+      'APPROVAL OF NOMINEES FOR APPOINTMENT TO THE NATIONAL LAND COMMISSION' ->
+      'Approval of Nominees for Appointment to the National Land Commission'
+    """
+    title = re.sub(r"^THE\s+", "", raw_heading.strip(), flags=re.IGNORECASE)
+    title = re.sub(
+        r"\((?:National Assembly|Senate) Bill No\..*?\)",
+        "",
+        title,
+        flags=re.IGNORECASE,
+    )
+    title = title.strip().title()
+    return title
+
+
+def extract_agenda_items(text: str) -> list[dict]:
+    """
+    Scans Hansard text for agenda item headings.
+
+    A heading qualifies as an agenda item if it:
+    - Is a line substantially in ALL CAPS
+    - Is not a section divider (PRAYERS, ADJOURNMENT, etc.)
+    - Contains at least 3 words
+    - Does not match known noise patterns (page numbers, disclaimers)
+
+    Returns a list of dicts, each containing:
+      raw_heading  — original text as found in the PDF
+      title        — cleaned, readable title
+      type         — BILL | MOTION | PETITION | STATEMENT | QUESTION | PAPER | OTHER
+      position     — character position in full text (used for speech assignment)
+
+    Results are sorted by position ascending.
+    """
+    heading_pattern = re.compile(
+        r"^([A-Z][A-Z\s\-\(\)\'\/,]{10,})$",
+        re.MULTILINE,
+    )
+
+    noise_patterns = [
+        r"^\d+$",
+        r"Disclaimer",
+        r"Hansard Editor",
+        r"electronic version",
+        r"^[A-Z]{1,3}$",
+        r"^National Assembly Debates",
+    ]
+
+    items = []
+    sequence = 0
+
+    for match in heading_pattern.finditer(text):
+        raw = match.group(1).strip()
+
+        if any(re.search(p, raw, re.IGNORECASE) for p in noise_patterns):
+            continue
+
+        if is_section_divider(raw):
+            continue
+
+        if len(raw.split()) < 3:
+            continue
+
+        sequence += 1
+        items.append({
+            "raw_heading": raw,
+            "title": clean_agenda_title(raw),
+            "type": classify_agenda_type(raw),
+            "position": match.start(),
+        })
+
+    items.sort(key=lambda item: item["position"])
+    return items
+
+# Deprecated
 def assign_agenda_items_to_speeches(
     full_text: str,
     speeches: list[dict],

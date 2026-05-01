@@ -1,7 +1,8 @@
 import re
 import logging
-from collections import defaultdict
+import sqlite3
 from pathlib import Path
+from typing import Optional
 
 from config import TOPIC_MAP, DB_PATH
 from analyzer.database.seed import get_connection
@@ -9,26 +10,20 @@ from analyzer.database.seed import get_connection
 logger = logging.getLogger(__name__)
 
 
-# Topic Classification
+# Agenda Title Classification
 
-def classify_speech_topics(content: str) -> list[dict]:
+def classify_agenda_title(title: str) -> list[dict]:
     """
-    Scans speech content against the TOPIC_MAP keyword lists and returns
-    all topics that have at least one keyword match.
+    Classifies an agenda item title against the TOPIC_MAP.
 
-    Each result dict contains:
-      topic      — the topic name
-      confidence — proportion of the topic's keywords found in the content,
-                   rounded to two decimal places (0.0 to 1.0)
-      matches    — the specific keywords that were found
+    Returns a list of matched topics sorted by confidence descending.
+    Each dict: {topic, confidence, matches}
 
-    Results are sorted by confidence descending.
-    Topics with zero matches are excluded entirely.
     """
-    if not content:
+    if not title:
         return []
 
-    content_lower = content.lower()
+    title_lower = title.lower()
     results = []
 
     for topic, keywords in TOPIC_MAP.items():
@@ -36,7 +31,7 @@ def classify_speech_topics(content: str) -> list[dict]:
 
         for keyword in keywords:
             pattern = re.compile(r"\b" + re.escape(keyword.lower()) + r"\b")
-            if pattern.search(content_lower):
+            if pattern.search(title_lower):
                 matched.append(keyword)
 
         if not matched:
@@ -51,47 +46,45 @@ def classify_speech_topics(content: str) -> list[dict]:
         })
 
     results.sort(key=lambda r: r["confidence"], reverse=True)
-
     return results
 
 
 # Topic Frequency
 
 def get_topic_frequency(
-    conn,
+    conn: sqlite3.Connection,
     topic: str,
-    from_date: str | None = None,
-    to_date: str | None = None,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
 ) -> list[dict]:
     """
-    Returns how many speeches were tagged with the given topic,
-    grouped by month. Optionally filtered by date range.
+    Returns how many agenda items were tagged with a given topic per month.
+    Each dict: {month, item_count}
     """
     cursor = conn.cursor()
-
     query = """
         SELECT
             strftime('%Y-%m', se.date) AS month,
-            COUNT(DISTINCT st.speech_id)  AS speech_count
-        FROM speech_topics st
-        JOIN speeches sp ON st.speech_id = sp.id
-        JOIN sessions se ON sp.session_id = se.id
-        WHERE st.topic = ?
+            COUNT(DISTINCT ait.agenda_item_id) AS item_count
+        FROM agenda_item_topics ait
+        JOIN agenda_items ai ON ait.agenda_item_id = ai.id
+        JOIN sessions se ON ai.session_id = se.id
+        WHERE ait.topic = ?
     """
     params: list = [topic]
-
-    if from_date is not None:
+    if from_date:
         query += " AND se.date >= ?"
         params.append(from_date)
 
-    if to_date is not None:
+    if to_date:
         query += " AND se.date <= ?"
         params.append(to_date)
 
-    query += " GROUP BY month ORDER BY month"
-
+    query += " GROUP BY month ORDER BY month ASC"
     cursor.execute(query, params)
     columns = [d[0] for d in cursor.description]
+
+
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 
@@ -99,19 +92,21 @@ def get_topic_frequency(
 
 def get_mp_topics(member_id: int, db_path: Path = DB_PATH) -> list[dict]:
     """
-    Returns all topics associated with a given member's speeches,
-    ordered by frequency of appearance.
+    Returns topics an MP has engaged with, derived from the agenda items
+    they spoke in. Replaces the old speech_topics based version.
+    Each dict: {topic, count}
     """
     conn = get_connection(db_path)
     try:
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT st.topic, COUNT(*) AS count
-            FROM speech_topics st
-            JOIN speeches sp ON st.speech_id = sp.id
+            SELECT ait.topic, COUNT(DISTINCT ai.id) AS count
+            FROM speeches sp
+            JOIN agenda_items ai ON sp.agenda_item_id = ai.id
+            JOIN agenda_item_topics ait ON ait.agenda_item_id = ai.id
             WHERE sp.member_id = ?
-            GROUP BY st.topic
+            GROUP BY ait.topic
             ORDER BY count DESC
             """,
             (member_id,),
@@ -124,58 +119,30 @@ def get_mp_topics(member_id: int, db_path: Path = DB_PATH) -> list[dict]:
 
 # Trending Topics
 
-def get_trending_topics(conn, days: int = 30) -> list[dict]:
+def get_trending_topics(
+    conn: sqlite3.Connection,
+    days: int = 30,
+    limit: int = 10,
+) -> list[dict]:
     """
-    Returns the most discussed topics over the last N days,
-    ordered by speech count descending.
+    Returns most discussed topics in the last N days, based on speech count
+    across agenda items tagged with each topic.
+    Each dict: {topic, speech_count}
     """
     cursor = conn.cursor()
     cursor.execute(
-        """
-        SELECT st.topic, COUNT(*) AS speech_count
-        FROM speech_topics st
-        JOIN speeches sp ON st.speech_id = sp.id
-        JOIN sessions se ON sp.session_id = se.id
+        f"""
+        SELECT ait.topic, COUNT(DISTINCT sp.id) AS speech_count
+        FROM agenda_item_topics ait
+        JOIN agenda_items ai ON ait.agenda_item_id = ai.id
+        JOIN speeches sp ON sp.agenda_item_id = ai.id
+        JOIN sessions se ON ai.session_id = se.id
         WHERE se.date >= date('now', ? || ' days')
-        GROUP BY st.topic
+        GROUP BY ait.topic
         ORDER BY speech_count DESC
+        LIMIT {int(limit)}
         """,
         (f"-{days}",),
     )
     columns = [d[0] for d in cursor.description]
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-
-# Agenda Item Topic Derivation
-
-def derive_topics_from_agenda_item(agenda_item: str) -> list[dict]:
-    """
-    Derives topic tags by matching the agenda item title against the TOPIC_MAP.
-    This is more accurate than scanning full speech content because the title
-    is a precise descriptor of what is being debated.
-
-    Returns the same structure as classify_speech_topics so the pipeline
-    can treat both interchangeably.
-    """
-    if not agenda_item:
-        return []
-
-    title_lower = agenda_item.lower()
-    results = []
-
-    for topic, keywords in TOPIC_MAP.items():
-        matched = [kw for kw in keywords if kw.lower() in title_lower]
-
-        if matched:
-            confidence = round(len(matched) / len(keywords), 2)
-            results.append({
-                "topic": topic,
-                "confidence": confidence,
-                "matches": matched,
-            })
-
-    if not results:
-        results = classify_speech_topics(agenda_item)
-
-    results.sort(key=lambda r: r["confidence"], reverse=True)
-    return results
