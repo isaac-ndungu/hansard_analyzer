@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS agenda_item_topics (
 );
 """
 
-# DEPRECATED — kept for migration safety. Will be removed in Day 4.
+# DEPRECATED — kept for migration safety.
 # Topics are now stored in agenda_item_topics, keyed to agenda_items.
 SPEECH_TOPICS_TABLE = """
 CREATE TABLE IF NOT EXISTS speech_topics (
@@ -125,15 +125,15 @@ CREATE TABLE IF NOT EXISTS tracked_topics (
 # Index Definitions
 
 INDEXES = [
-    "CREATE INDEX IF NOT EXISTS idx_speeches_member     ON speeches(member_id);",
-    "CREATE INDEX IF NOT EXISTS idx_speeches_session    ON speeches(session_id);",
-    "CREATE INDEX IF NOT EXISTS idx_speeches_agenda     ON speeches(agenda_item_id);",
-    "CREATE INDEX IF NOT EXISTS idx_speeches_section    ON speeches(section);",
+    "CREATE INDEX IF NOT EXISTS idx_speeches_member      ON speeches(member_id);",
+    "CREATE INDEX IF NOT EXISTS idx_speeches_session     ON speeches(session_id);",
+    "CREATE INDEX IF NOT EXISTS idx_speeches_agenda      ON speeches(agenda_item_id);",
+    "CREATE INDEX IF NOT EXISTS idx_speeches_section     ON speeches(section);",
     "CREATE INDEX IF NOT EXISTS idx_agenda_items_session ON agenda_items(session_id);",
-    "CREATE INDEX IF NOT EXISTS idx_agenda_items_type   ON agenda_items(type);",
-    "CREATE INDEX IF NOT EXISTS idx_agenda_item_topics  ON agenda_item_topics(agenda_item_id);",
-    "CREATE INDEX IF NOT EXISTS idx_agenda_topic_name   ON agenda_item_topics(topic);",
-    "CREATE INDEX IF NOT EXISTS idx_bills_agenda        ON bills(agenda_item_id);",
+    "CREATE INDEX IF NOT EXISTS idx_agenda_items_type    ON agenda_items(type);",
+    "CREATE INDEX IF NOT EXISTS idx_agenda_item_topics   ON agenda_item_topics(agenda_item_id);",
+    "CREATE INDEX IF NOT EXISTS idx_agenda_topic_name    ON agenda_item_topics(topic);",
+    "CREATE INDEX IF NOT EXISTS idx_bills_agenda         ON bills(agenda_item_id);",
 ]
 
 
