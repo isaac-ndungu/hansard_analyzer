@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 
@@ -30,7 +30,7 @@ def insert_session(
             issue,
             session_time,
             pdf_path,
-            datetime.utcnow().isoformat(),
+            datetime.now(timezone.utc).isoformat(),
         ),
     )
     conn.commit()
@@ -73,6 +73,7 @@ def get_or_create_member(
     constituency: str,
     party: str,
 ) -> int:
+    
     cursor = conn.cursor()
     cursor.execute(
         "SELECT id FROM members WHERE name = ? AND constituency = ?",
@@ -80,7 +81,7 @@ def get_or_create_member(
     )
     row = cursor.fetchone()
 
-    today = datetime.utcnow().date().isoformat()
+    today = datetime.now(timezone.utc).date().isoformat()
 
     if row is not None:
         member_id = row[0]
@@ -148,7 +149,7 @@ def insert_speech(
             content,
             word_count,
             sentiment_score,
-            datetime.utcnow().isoformat(),
+            datetime.now(timezone.utc).isoformat(),
         ),
     )
     conn.commit()
@@ -240,7 +241,7 @@ def insert_agenda_item(
             item_type,
             sequence,
             raw_heading,
-            datetime.utcnow().isoformat(),
+            datetime.now(timezone.utc).isoformat(),
         ),
     )
     conn.commit()
@@ -253,6 +254,7 @@ def get_agenda_items_by_session(
 ) -> list[dict]:
     """Returns all agenda items for a session ordered by sequence."""
     cursor = conn.cursor()
+
     cursor.execute(
         """
         SELECT ai.*, COUNT(sp.id) AS speech_count
@@ -304,22 +306,27 @@ def get_agenda_items_by_topic(
         LEFT JOIN speeches sp ON sp.agenda_item_id = ai.id
         WHERE ait.topic = ?
     """
-    params = [topic]
+    params: list = [topic]
+
     if item_type:
         query += " AND ai.type = ?"
         params.append(item_type)
+
     query += " GROUP BY ai.id ORDER BY se.date DESC"
     cursor.execute(query, params)
     columns = [d[0] for d in cursor.description]
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 
-def get_speeches_by_agenda_item(conn: sqlite3.Connection, agenda_item_id: int) -> list[dict]:
+def get_speeches_by_agenda_item(
+    conn: sqlite3.Connection,
+    agenda_item_id: int,
+) -> list[dict]:
     """Returns all speeches under a specific agenda item with member info."""
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT sp.*, m.name AS member_name, m.constituency, m.party
+        SELECT sp.*, m.name AS member_name, m.constituency, m.party, m.id AS member_id
         FROM speeches sp
         JOIN members m ON sp.member_id = m.id
         WHERE sp.agenda_item_id = ?
@@ -327,6 +334,7 @@ def get_speeches_by_agenda_item(conn: sqlite3.Connection, agenda_item_id: int) -
         """,
         (agenda_item_id,),
     )
+
     columns = [d[0] for d in cursor.description]
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
@@ -443,12 +451,13 @@ def get_or_create_bill(
         return row[0]
     cursor.execute(
         """
-        INSERT INTO bills (agenda_item_id, bill_number, bill_year, title,
-                           current_status, introduced_date, last_activity)
+        INSERT INTO bills
+            (agenda_item_id, bill_number, bill_year, title,
+             current_status, introduced_date, last_activity)
         VALUES (?, ?, ?, ?, 'In Progress', ?, ?)
         """,
-        (agenda_item_id, bill_number, bill_year, title, introduced_date,
-         introduced_date),
+        (agenda_item_id, bill_number, bill_year, title,
+         introduced_date, introduced_date),
     )
     conn.commit()
     return cursor.lastrowid
@@ -462,7 +471,7 @@ def insert_bill_reading(
     outcome: Optional[str],
     date: str,
 ) -> int:
-    """Inserts a reading event for a bill."""
+    """Inserts a reading event for a bill and updates bill status if outcome is known."""
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -486,19 +495,19 @@ def insert_bill_reading(
 
 
 def get_all_bills(conn: sqlite3.Connection) -> list[dict]:
-    """Returns all bills with their latest reading info, ordered by date descending."""
+    """Returns all bills with reading count and latest reading date, ordered by most recent."""
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT b.*, COUNT(br.id) AS reading_count,
-               MAX(br.date) AS latest_reading_date,
-               se.date AS session_date
+        SELECT
+            b.*,
+            COUNT(br.id)    AS reading_count,
+            MAX(br.date)    AS latest_reading_date
         FROM bills b
         LEFT JOIN bill_readings br ON br.bill_id = b.id
-        LEFT JOIN sessions se ON br.session_id = se.id
         GROUP BY b.id
-        ORDER BY latest_reading_date DESC NULLS LAST
-        """,
+        ORDER BY latest_reading_date DESC
+        """
     )
     columns = [d[0] for d in cursor.description]
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
@@ -516,7 +525,6 @@ def get_bill_with_readings(
         return None
     columns = [d[0] for d in cursor.description]
     bill = dict(zip(columns, row))
-
     cursor.execute(
         """
         SELECT br.*, se.date, se.chamber
@@ -542,8 +550,7 @@ def search_agenda_items(
     """
     Searches agenda item titles for a keyword.
     Returns matching agenda items with session info and speech counts.
-    This is the primary search — users search for what Parliament DISCUSSED,
-    not raw speech text.
+    Each dict includes: id, title, type, date, speaker_count, speech_count, topics
     """
     cursor = conn.cursor()
     query = """
@@ -562,7 +569,7 @@ def search_agenda_items(
         LEFT JOIN agenda_item_topics ait ON ait.agenda_item_id = ai.id
         WHERE ai.title LIKE ?
     """
-    params = [f"%{keyword}%"]
+    params: list = [f"%{keyword}%"]
     if from_date:
         query += " AND se.date >= ?"
         params.append(from_date)
@@ -585,6 +592,7 @@ def search_mp_participation(
     """
     Returns MPs who have spoken in agenda items matching the keyword.
     Used for the secondary search results — 'MPs who spoke about X'.
+    Each dict: {id, name, constituency, party, speech_count, agenda_items}
     """
     cursor = conn.cursor()
     cursor.execute(
@@ -627,13 +635,14 @@ def insert_speech_topic(
 
 
 # Summary Queries
-
 def get_database_stats(conn: sqlite3.Connection) -> dict:
+    """Returns row counts for all primary tables."""
     cursor = conn.cursor()
     stats = {}
 
-    for table in ("sessions", "members", "speeches", "speech_topics"):
+    for table in ("sessions", "members", "agenda_items", "speeches",
+                  "agenda_item_topics", "bills"):
         cursor.execute(f"SELECT COUNT(*) FROM {table}")
         stats[table] = cursor.fetchone()[0]
-
+        
     return stats
