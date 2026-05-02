@@ -20,7 +20,7 @@ def agenda_item_detail(agenda_item_id):
 
     speeches = get_speeches_by_agenda_item(conn, agenda_item_id)
     topics = get_topics_for_agenda_item(conn, agenda_item_id)
-    
+
     conn.close()
 
     scored = [s["sentiment_score"] for s in speeches if s["sentiment_score"] is not None]
@@ -51,4 +51,5 @@ def agenda_item_detail(agenda_item_id):
         avg_sentiment=avg_sentiment,
         sentiment_label=sentiment_label,
         total_words=sum(s["word_count"] or 0 for s in speeches),
+        total_speeches=len(speeches),
     )

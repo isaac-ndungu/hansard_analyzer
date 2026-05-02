@@ -1,110 +1,184 @@
 {% extends "base.html" %}
 
-{% block title %}Agenda Item {{ item.id }} - Hansard Analyzer{% endblock %}
+{% block title %}{{ item.title }} — Hansard Analyzer{% endblock %}
 
 {% block content %}
-<div class="py-10">
-    <div class="space-y-6">
-        <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <p class="text-xs font-semibold tracking-widest text-gray-400 uppercase">Agenda item</p>
-                    <h1 class="mt-2 text-2xl font-semibold text-gray-900">{{ item.title }}</h1>
-                    {% if item.raw_heading %}
-                    <p class="mt-3 text-sm text-gray-600">{{ item.raw_heading }}</p>
-                    {% endif %}
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700">{{ item.type or 'Unknown' }}</span>
-                    <span class="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">ID {{ item.id }}</span>
-                </div>
-            </div>
-        </div>
 
-        <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
-            <div class="space-y-6">
-                <div class="bg-white border border-gray-200 rounded-xl p-6">
-                    <p class="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-4">Topics</p>
-                    <div class="flex flex-wrap gap-2">
-                        {% for topic in topics %}
-                        <span class="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">
-                            {{ topic.topic }}
-                            {% if topic.confidence is not none %}
-                            • {{ topic.confidence|round(1) }}%
-                            {% endif %}
-                        </span>
-                        {% else %}
-                        <p class="text-sm text-gray-500">No topics tagged for this agenda item.</p>
-                        {% endfor %}
-                    </div>
-                </div>
+<nav class="flex items-center gap-2 text-xs text-gray-400 mb-6">
+    <a href="/sessions/" class="hover:text-gray-600">Sessions</a>
+    <span>/</span>
+    <a href="/sessions/{{ item.session_id }}" class="hover:text-gray-600">
+        Session {{ item.session_id }}
+    </a>
+    <span>/</span>
+    <span class="text-gray-700">{{ item.title }}</span>
+</nav>
 
-                <div class="bg-white border border-gray-200 rounded-xl p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <p class="text-xs font-semibold tracking-widest text-gray-400 uppercase">Speech log</p>
-                        <p class="text-xs text-gray-500">{{ speeches|length }} speeches</p>
-                    </div>
-                    <div class="space-y-4">
-                        {% for speech in speeches %}
-                        <div class="border border-gray-200 rounded-xl p-4 hover:border-green-400 hover:shadow-sm transition-all">
-                            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <a href="{{ url_for('members.mp_scorecard', member_id=speech.member_id) }}" class="text-sm font-semibold text-gray-900 hover:text-green-700 transition-colors">
-                                        {{ speech.member_name }}
-                                    </a>
-                                    <p class="text-xs text-gray-500">{{ speech.constituency }} · {{ speech.party }}</p>
-                                </div>
-                                <div class="text-right text-xs text-gray-500 space-y-1">
-                                    <div>{{ speech.word_count or 0 }} words</div>
-                                    <div>Sentiment: {{ speech.sentiment_score is not none and speech.sentiment_score|round(2) or 'N/A' }}</div>
-                                </div>
-                            </div>
-                            {% if speech.section %}
-                            <p class="mt-3 text-xs uppercase tracking-widest text-gray-400">{{ speech.section }}</p>
-                            {% endif %}
-                            <p class="mt-3 text-sm text-gray-700 whitespace-pre-line">{{ speech.content }}</p>
-                        </div>
-                        {% else %}
-                        <p class="text-sm text-gray-500">No speeches are available for this agenda item.</p>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
+<div class="mb-6">
+    <div class="flex items-center gap-3 mb-2">
+        <span class="text-xs px-2 py-0.5 rounded-full font-medium
+            {% if item.type == 'BILL' %}bg-blue-100 text-blue-700
+            {% elif item.type == 'MOTION' %}bg-purple-100 text-purple-700
+            {% elif item.type == 'PETITION' %}bg-orange-100 text-orange-700
+            {% elif item.type == 'STATEMENT' %}bg-gray-100 text-gray-600
+            {% elif item.type == 'QUESTION' %}bg-yellow-100 text-yellow-700
+            {% else %}bg-gray-100 text-gray-500{% endif %}">
+            {{ item.type }}
+        </span>
+        {% if topics %}
+        {% for t in topics %}
+        <a href="/topics/{{ t.topic }}"
+           class="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full
+                  capitalize hover:bg-green-100 transition-colors">
+            {{ t.topic }}
+        </a>
+        {% endfor %}
+        {% endif %}
+    </div>
+    <h1 class="text-2xl font-bold text-gray-900 mb-1">{{ item.title }}</h1>
+    <p class="text-sm text-gray-400">
+        Session {{ item.session_id }}
+        {% if sentiment_label == 'Constructive' %}
+        <span class="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+            Constructive debate
+        </span>
+        {% elif sentiment_label == 'Heated' %}
+        <span class="ml-2 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+            Heated debate
+        </span>
+        {% else %}
+        <span class="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
+            Neutral
+        </span>
+        {% endif %}
+    </p>
+</div>
 
-            <div class="space-y-6">
-                <div class="bg-white border border-gray-200 rounded-xl p-6">
-                    <p class="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-4">Speakers</p>
-                    <div class="space-y-3">
-                        {% for speaker in top_speakers %}
-                        <div class="flex items-center justify-between gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                            <div>
-                                <p class="text-sm font-medium text-gray-900">{{ speaker.name }}</p>
-                                <p class="text-xs text-gray-500">{{ speaker.constituency }} · {{ speaker.party }}</p>
-                            </div>
-                            <span class="text-xs font-semibold text-gray-600">{{ speaker.count }} speech{{ 'es' if speaker.count != 1 else '' }}</span>
-                        </div>
-                        {% else %}
-                        <p class="text-sm text-gray-500">No speaker data available.</p>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div class="bg-white border border-gray-200 rounded-xl p-6">
-                    <p class="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-4">Sentiment</p>
-                    <div class="space-y-3">
-                        <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
-                            <p class="text-sm text-gray-700">Average sentiment score</p>
-                            <p class="mt-2 text-3xl font-semibold text-gray-900">{{ avg_sentiment|round(3) }}</p>
-                            <p class="text-sm text-green-700 font-semibold">{{ sentiment_label }}</p>
-                        </div>
-                        <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
-                            <p class="text-sm text-gray-700">Total words across speeches</p>
-                            <p class="mt-2 text-2xl font-semibold text-gray-900">{{ total_words }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="grid grid-cols-3 gap-4 mb-8">
+    <div class="border border-gray-200 rounded-xl p-4 text-center bg-white">
+        <div class="text-2xl font-bold text-gray-900">{{ top_speakers|length }}</div>
+        <div class="text-xs uppercase tracking-widest text-gray-400 mt-1">Speakers</div>
+    </div>
+    <div class="border border-gray-200 rounded-xl p-4 text-center bg-white">
+        <div class="text-2xl font-bold text-gray-900">{{ total_speeches }}</div>
+        <div class="text-xs uppercase tracking-widest text-gray-400 mt-1">Speeches</div>
+    </div>
+    <div class="border border-gray-200 rounded-xl p-4 text-center bg-white">
+        <div class="text-2xl font-bold text-gray-900">{{ "{:,}".format(total_words) }}</div>
+        <div class="text-xs uppercase tracking-widest text-gray-400 mt-1">Words</div>
     </div>
 </div>
+
+<!-- AI Summary Block — wired in Task 4.3 -->
+<div class="border border-gray-200 rounded-xl p-5 mb-8 bg-white" id="ai-block">
+    <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold text-gray-700">AI Summary</h3>
+        <span class="text-xs text-gray-400">Powered by Gemini</span>
+    </div>
+    <div id="ai-summary-text" class="text-sm text-gray-500 leading-relaxed italic">
+        Click below to generate a plain-language summary of this debate.
+    </div>
+    <div class="flex items-center gap-3 mt-4">
+        <button id="ai-btn"
+                onclick="generateAgendaSummary({{ item.id }})"
+                class="text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100
+                       border border-green-200 hover:border-green-400
+                       px-4 py-2 rounded-lg transition-all">
+            Generate Summary
+        </button>
+        <span id="ai-status" class="text-xs text-gray-400 hidden">
+            Analyzing {{ total_speeches }} speeches…
+        </span>
+    </div>
+</div>
+
+<div class="grid grid-cols-3 gap-8">
+    <div class="col-span-2">
+        <h2 class="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-4">
+            Speech Log
+        </h2>
+        {% if speeches %}
+        {% for speech in speeches %}
+        <div class="border-l-2 border-gray-200 hover:border-green-400 pl-4 mb-6 transition-colors">
+            <div class="mb-1">
+                <a href="/members/{{ speech.member_id }}"
+                   class="font-semibold text-sm text-gray-900 hover:text-green-700 transition-colors">
+                    {{ speech.member_name }}
+                </a>
+                <span class="text-xs text-gray-400 ml-2">
+                    {{ speech.constituency }} &mdash;
+                    <span class="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-xs">
+                        {{ speech.party }}
+                    </span>
+                </span>
+            </div>
+            <p class="text-sm text-gray-700 leading-relaxed">{{ speech.content }}</p>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="text-sm text-gray-400">No speeches recorded for this agenda item.</p>
+        {% endif %}
+    </div>
+
+    <div>
+        {% if top_speakers %}
+        <h2 class="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-4">
+            Top Speakers
+        </h2>
+        {% for speaker in top_speakers %}
+        <div class="flex items-center justify-between gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <div>
+                <p class="text-sm font-medium text-gray-900">{{ speaker.name }}</p>
+                <p class="text-xs text-gray-400">{{ speaker.party }}</p>
+            </div>
+            <span class="text-xs text-gray-400">{{ speaker.count }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function generateAgendaSummary(agendaItemId) {
+    const btn = document.getElementById('ai-btn');
+    const textEl = document.getElementById('ai-summary-text');
+    const statusEl = document.getElementById('ai-status');
+
+    btn.disabled = true;
+    btn.textContent = 'Generating…';
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
+    statusEl.classList.remove('hidden');
+    textEl.textContent = '';
+    textEl.classList.add('italic');
+
+    try {
+        const response = await fetch(`/agenda/${agendaItemId}/summary`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        textEl.textContent = data.summary;
+        textEl.classList.remove('italic');
+        statusEl.classList.add('hidden');
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        btn.textContent = data.cached ? 'Cached — Regenerate' : 'Regenerate';
+
+    } catch (err) {
+        textEl.textContent = 'Failed to generate summary. Please try again.';
+        textEl.classList.remove('italic');
+        statusEl.classList.add('hidden');
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        btn.textContent = 'Try Again';
+    }
+}
+</script>
 {% endblock %}

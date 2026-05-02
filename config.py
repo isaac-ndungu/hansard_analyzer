@@ -136,3 +136,10 @@ TOPIC_MAP ={
 
 SYNC_SCHEDULE_HOUR = 6
 SYNC_SCHEDULE_MINUTE = 0
+
+
+class Config:
+    SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
+    DB_PATH = str(DB_PATH)
+    GEMINI_API_KEY = GEMINI_API_KEY
+    GEMINI_MODEL = GEMINI_MODEL

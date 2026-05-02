@@ -1,53 +1,68 @@
 {% extends "base.html" %}
 
-{% block title %}Bills - Hansard Analyzer{% endblock %}
+{% block title %}Bills — Hansard Analyzer{% endblock %}
 
 {% block content %}
-<div class="py-10">
-    <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <p class="text-xs font-semibold tracking-widest text-gray-400 uppercase">Bills</p>
-                <h1 class="mt-2 text-3xl font-semibold text-gray-900">Legislation overview</h1>
-            </div>
-            <p class="text-sm text-gray-500">Browse current bills and reading progress.</p>
-        </div>
-
-        <div class="mt-6 overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-4 py-3 font-semibold text-xs uppercase tracking-widest text-gray-500">Bill</th>
-                        <th class="px-4 py-3 font-semibold text-xs uppercase tracking-widest text-gray-500">Status</th>
-                        <th class="px-4 py-3 font-semibold text-xs uppercase tracking-widest text-gray-500">Readings</th>
-                        <th class="px-4 py-3 font-semibold text-xs uppercase tracking-widest text-gray-500">Latest activity</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 bg-white">
-                    {% for bill in bills %}
-                    <tr class="hover:bg-green-50 transition-colors">
-                        <td class="px-4 py-4">
-                            <a href="{{ url_for('bills.bill_detail', bill_id=bill.id) }}" class="block text-sm font-medium text-gray-900 hover:text-green-700 transition-colors">
-                                {{ bill.title }}
-                            </a>
-                            <p class="mt-1 text-xs text-gray-500">{{ bill.bill_number or 'No number' }}</p>
-                        </td>
-                        <td class="px-4 py-4">
-                            <span class="text-xs px-2 py-0.5 rounded-full font-medium {% if bill.current_status == 'Passed' %}bg-green-100 text-green-700{% elif bill.current_status == 'Rejected' %}bg-red-100 text-red-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
-                                {{ bill.current_status or 'Unknown' }}
-                            </span>
-                        </td>
-                        <td class="px-4 py-4 text-sm text-gray-600">{{ bill.reading_count or 0 }}</td>
-                        <td class="px-4 py-4 text-sm text-gray-600">{{ bill.latest_reading_date or 'No activity' }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="4" class="px-4 py-8 text-center text-sm text-gray-500">No bills found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Bills</h1>
+    <span class="text-sm text-gray-400">{{ bills|length }} bills</span>
 </div>
+
+{% if bills %}
+<div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="border-b border-gray-100">
+                <th class="text-left px-4 py-3 text-xs font-semibold tracking-widest
+                           text-gray-400 uppercase">Bill</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold tracking-widest
+                           text-gray-400 uppercase">Number</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold tracking-widest
+                           text-gray-400 uppercase">Status</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold tracking-widest
+                           text-gray-400 uppercase">Introduced</th>
+                <th class="text-right px-4 py-3 text-xs font-semibold tracking-widest
+                           text-gray-400 uppercase">Readings</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bill in bills %}
+            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                <td class="px-4 py-3">
+                    <a href="/bills/{{ bill.id }}"
+                       class="font-medium text-gray-900 hover:text-green-700 transition-colors">
+                        {{ bill.title }}
+                    </a>
+                </td>
+                <td class="px-4 py-3 text-gray-400 text-xs">
+                    {% if bill.bill_number %}
+                        No. {{ bill.bill_number }} of {{ bill.bill_year }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+                <td class="px-4 py-3">
+                    <span class="text-xs px-2 py-0.5 rounded-full font-medium
+                        {% if bill.current_status == 'Passed' %}bg-green-100 text-green-700
+                        {% elif bill.current_status == 'Rejected' %}bg-red-100 text-red-700
+                        {% else %}bg-gray-100 text-gray-600{% endif %}">
+                        {{ bill.current_status or 'In Progress' }}
+                    </span>
+                </td>
+                <td class="px-4 py-3 text-gray-400 text-xs">
+                    {{ bill.introduced_date or '—' }}
+                </td>
+                <td class="px-4 py-3 text-right text-gray-400 text-xs">
+                    {{ bill.reading_count or 0 }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="text-sm text-gray-400">
+    No bills in the database yet. Run the sync pipeline to load data.
+</p>
+{% endif %}
 {% endblock %}
