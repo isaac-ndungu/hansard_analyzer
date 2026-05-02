@@ -237,4 +237,10 @@ def run_pipeline(pdf_path: Path) -> int:
 
     conn.close()
     logger.info("Stored %d speeches from %s", stored_count, pdf_path.name)
+
+    # Update sentiment for newly stored speeches
+    from analyzer.analytics.sentiment import update_speech_sentiments
+    updated = update_speech_sentiments()
+    logger.info("Sentiment updated for %d speeches.", updated)
+
     return stored_count

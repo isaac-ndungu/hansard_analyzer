@@ -220,5 +220,15 @@ def cmd_mp_list():
     console.print(table)
 
 
+@cli.command("update-sentiments")
+def cmd_update_sentiments():
+    """Score sentiment for all speeches that currently have NULL sentiment_score."""
+    from analyzer.analytics.sentiment import update_speech_sentiments
+
+    console.print(Panel("Running sentiment batch update...", title="update-sentiments"))
+    count = update_speech_sentiments()
+    console.print(f"Updated sentiment scores for {count} speech(es).")
+
+
 if __name__ == "__main__":
     cli()

@@ -21,6 +21,20 @@ def create_app():
     app.register_blueprint(agenda_items_bp, url_prefix="/agenda")
     app.register_blueprint(bills_bp,        url_prefix="/bills")
 
+    @app.route("/health")
+    def health():
+        """Returns database statistics as JSON. Used for monitoring."""
+        from flask import jsonify
+        from analyzer.database.seed import get_connection
+        from analyzer.database.queries import get_database_stats
+        try:
+            conn = get_connection()
+            stats = get_database_stats(conn)
+            conn.close()
+            return jsonify({"status": "ok", "stats": stats})
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+
     return app
 
 
