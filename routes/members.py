@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, abort
 from analyzer.database.seed import get_connection
-from analyzer.database.queries import get_all_members, get_mp_agenda_items
+from analyzer.database.queries import get_all_members_with_stats, get_mp_agenda_items
 from analyzer.analytics.mp_stats import get_mp_full_profile
 from analyzer.analytics.sentiment import get_mp_sentiment_profile, score_label
 from analyzer.analytics.topics import get_mp_topics
@@ -19,9 +19,9 @@ members_bp = Blueprint("members", __name__)
 @members_bp.route("/")
 def member_list():
     conn = get_connection()
-    members = get_all_members(conn)
+    members = get_all_members_with_stats(conn)
     conn.close()
-    return render_template("member_list.html", members=members)
+    return render_template("members.html", members=members)
 
 @members_bp.route("/<int:member_id>")
 def member_detail(member_id):

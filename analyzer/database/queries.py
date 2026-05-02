@@ -110,6 +110,24 @@ def get_all_members(conn: sqlite3.Connection) -> list[dict]:
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 
+def get_all_members_with_stats(conn: sqlite3.Connection) -> list[dict]:
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT
+            m.*,
+            COUNT(sp.id) AS speech_count,
+            COALESCE(SUM(sp.word_count), 0) AS word_count
+        FROM members m
+        LEFT JOIN speeches sp ON sp.member_id = m.id
+        GROUP BY m.id
+        ORDER BY m.name
+        """
+    )
+    columns = [description[0] for description in cursor.description]
+    return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+
 def get_member_by_name(conn: sqlite3.Connection, name: str) -> Optional[dict]:
     cursor = conn.cursor()
     cursor.execute(

@@ -40,11 +40,11 @@
         </div>
         <div class="grid grid-cols-2 gap-3 text-sm">
             <div>
-                <div class="text-base font-semibold text-gray-900">{{ member.speech_count }}</div>
+                <div class="text-base font-semibold text-gray-900">{{ member.speech_count or 0 }}</div>
                 <div class="text-xs text-gray-500">Speeches</div>
             </div>
             <div>
-                <div class="text-base font-semibold text-gray-900">{{ "{:,}".format(member.word_count) }}</div>
+                <div class="text-base font-semibold text-gray-900">{{ "{:,}".format(member.word_count or 0) }}</div>
                 <div class="text-xs text-gray-500">Words</div>
             </div>
         </div>

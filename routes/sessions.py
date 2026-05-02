@@ -17,7 +17,7 @@ sessions_bp = Blueprint("sessions", __name__)
 @sessions_bp.route("/")
 def session_list():
     sessions = get_all_sessions_list()
-    return render_template("session_list.html", sessions=sessions)
+    return render_template("sessions.html", sessions=sessions)
 
 @sessions_bp.route("/<int:session_id>")
 def session_detail(session_id):

@@ -170,10 +170,11 @@ def get_mp_recent_speeches(
                 sp.content,
                 sp.word_count,
                 sp.section,
-                sp.agenda_item,
+                ai.title AS agenda_item,
                 sp.sentiment_score,
                 se.date
             FROM speeches sp
+            LEFT JOIN agenda_items ai ON sp.agenda_item_id = ai.id
             JOIN sessions se ON sp.session_id = se.id
             WHERE sp.member_id = ?
             ORDER BY se.date DESC

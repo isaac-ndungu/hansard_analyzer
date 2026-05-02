@@ -28,7 +28,7 @@
 
             <!-- Nav links -->
             <div class="hidden sm:flex items-center gap-6 text-sm text-gray-300">
-                <a href="{{ url_for('members.mp_list') }}"
+                <a href="{{ url_for('members.member_list') }}"
                    class="hover:text-white transition-colors">MPs</a>
                 <a href="{{ url_for('sessions.session_list') }}"
                    class="hover:text-white transition-colors">Sessions</a>
@@ -57,7 +57,7 @@
 
         <!-- Mobile nav -->
         <div id="mobile-menu" class="hidden sm:hidden pb-3 text-sm text-gray-300 space-y-2">
-            <a href="{{ url_for('members.mp_list') }}" class="block hover:text-white py-1">MPs</a>
+            <a href="{{ url_for('members.member_list') }}" class="block hover:text-white py-1">MPs</a>
             <a href="{{ url_for('sessions.session_list') }}" class="block hover:text-white py-1">Sessions</a>
             <a href="{{ url_for('topics.topics_overview') }}" class="block hover:text-white py-1">Topics</a>
             <a href="{{ url_for('search.search') }}" class="block hover:text-white py-1">Search</a>
