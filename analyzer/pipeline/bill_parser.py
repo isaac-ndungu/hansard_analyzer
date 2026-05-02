@@ -109,13 +109,19 @@ def extract_bills(text: str) -> list[dict]:
                 reading = reading_name
                 break
 
+        outcome = None
+        if re.search(r"Question put and agreed to", context, re.IGNORECASE):
+            outcome = "Passed"
+        elif re.search(r"Question put and negatived", context, re.IGNORECASE):
+            outcome = "Rejected"
+
         bills.append({
             "raw_title": raw_title,
             "title": clean_title,
             "bill_number": bill_number,
             "bill_year": bill_year,
             "reading": reading,
-            "outcome": None,
+            "outcome": outcome,
         })
 
     return bills

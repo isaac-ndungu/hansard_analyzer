@@ -115,10 +115,10 @@ def parse_speakers(text: str) -> list[dict]:
             "constituency": constituency,
             "party": party,
             "content": content,
-            "_pos": match.start(),
+            "position": match.start(),
         })
 
-    titled_positions = {s["_pos"] for s in collected}
+    titled_positions = {s["position"] for s in collected}
 
     for match in SPEAKER_PATTERN.finditer(text):
         name = match.group(1).strip()
@@ -142,13 +142,10 @@ def parse_speakers(text: str) -> list[dict]:
             "constituency": constituency,
             "party": party,
             "content": content,
-            "_pos": match.start(),
+            "position": match.start(),
         })
 
-    collected.sort(key=lambda s: s["_pos"])
-
-    for speech in collected:
-        del speech["_pos"]
+    collected.sort(key=lambda s: s["position"])
 
     return collected
 

@@ -143,6 +143,8 @@ def normalize_speech(speech: dict) -> dict:
         "party": normalize_party(speech["party"]),
         "content": speech["content"].strip(),
         "section": speech.get("section", "UNKNOWN").upper(),
+        "agenda_item": speech.get("agenda_item"),
+        "position": speech.get("position", 0),
         "word_count": compute_word_count(speech["content"]),
         "topics": extract_topics(speech["content"]),
     }

@@ -28,66 +28,32 @@ logger = logging.getLogger(__name__)
 
 # Speech-to-Agenda Assignment
 
-def _find_agenda_item_id(
-    speech_section: str,
-    speech_content: str,
-    agenda_items_map: dict,
+def _find_agenda_item_for_speech(
+    speech_position: int,
+    agenda_items_with_positions: list[dict],
 ) -> Optional[int]:
     """
-    Finds the most likely agenda item id for a speech.
+    Finds the agenda item a speech belongs to using character position.
 
-    Strategy:
-    1. Map the speech's broad section (BILLS, MOTIONS) to an agenda item type
-    2. Among agenda items of that type, find one whose title words appear
-       in the speech content
-    3. If no content match, return the last inserted agenda item of that type
+    A speech belongs to the agenda item whose heading appeared most recently
+    before the speech in the raw text. This is the positional reading model —
+    everything after a heading belongs to that heading until the next one appears.
 
-    Returns an agenda_item_id integer, or None if no match can be found.
+    Returns the agenda item id or None if no heading precedes the speech.
     """
-    if not agenda_items_map:
+    if not agenda_items_with_positions:
         return None
 
-    section_to_types = {
-        "BILLS":      ["BILL"],
-        "MOTIONS":    ["MOTION", "BILL"],
-        "PETITIONS":  ["PETITION"],
-        "STATEMENTS": ["STATEMENT"],
-        "QUESTIONS":  ["QUESTION"],
-        "PAPERS":     ["PAPER"],
-    }
+    best_id = None
+    best_position = -1
 
-    section_upper = (speech_section or "").upper()
-    target_types = None
+    for item in agenda_items_with_positions:
+        item_pos = item["position"]
+        if item_pos <= speech_position and item_pos > best_position:
+            best_position = item_pos
+            best_id = item["id"]
 
-    for section_key, item_types in section_to_types.items():
-        if section_key in section_upper:
-            target_types = item_types
-            break
-
-    if target_types is None:
-        return None
-
-    content_lower = (speech_content or "").lower()
-    last_match = None
-
-    for aid, item in agenda_items_map.items():
-        if item["type"] not in target_types:
-            continue
-        last_match = aid
-        title_words = [w for w in item["title"].lower().split() if len(w) > 4]
-        if title_words and any(word in content_lower for word in title_words):
-            return aid
-
-    if last_match is not None:
-        return last_match
-
-    # Fallback: if no agenda item was matched by section/type, attempt a title keyword match
-    for aid, item in agenda_items_map.items():
-        title_words = [w for w in item["title"].lower().split() if len(w) > 4]
-        if title_words and any(word in content_lower for word in title_words):
-            return aid
-
-    return None
+    return best_id
 
 
 # Pipeline Orchestration
@@ -150,8 +116,8 @@ def run_pipeline(pdf_path: Path) -> int:
     raw_text = extract_text(pdf_path)
     agenda_item_dicts = extract_agenda_items(raw_text)
 
-    # agenda_items_map: {agenda_item_id: {title, type}} for speech matching
-    agenda_items_map = {}
+    # agenda_items_with_positions: list of agenda items with document offsets
+    agenda_items_with_positions = []
 
     for seq, item_dict in enumerate(agenda_item_dicts, start=1):
         aid = insert_agenda_item(
@@ -162,20 +128,22 @@ def run_pipeline(pdf_path: Path) -> int:
             sequence=seq,
             raw_heading=item_dict["raw_heading"],
         )
-        agenda_items_map[aid] = {
-            "title": item_dict["title"],
-            "type": item_dict["type"],
-            "raw_heading": item_dict["raw_heading"],
-            "position": item_dict["position"],
-        }
 
         topics = classify_agenda_title(item_dict["title"])
         for tm in topics:
             insert_agenda_item_topic(conn, aid, tm["topic"], tm["confidence"])
 
+        agenda_items_with_positions.append({
+            "id": aid,
+            "position": item_dict["position"],
+            "title": item_dict["title"],
+            "type": item_dict["type"],
+            "raw_heading": item_dict["raw_heading"],
+        })
+
     logger.info(
         "Inserted %d agenda items for session %s",
-        len(agenda_items_map),
+        len(agenda_items_with_positions),
         normalized["date"],
     )
 
@@ -189,10 +157,9 @@ def run_pipeline(pdf_path: Path) -> int:
             party=speech["party"],
         )
 
-        agenda_item_id = _find_agenda_item_id(
-            speech_section=speech.get("section"),
-            speech_content=speech.get("content"),
-            agenda_items_map=agenda_items_map,
+        agenda_item_id = _find_agenda_item_for_speech(
+            speech_position=speech.get("position", 0),
+            agenda_items_with_positions=agenda_items_with_positions,
         )
 
         insert_speech(
@@ -208,7 +175,7 @@ def run_pipeline(pdf_path: Path) -> int:
 
     # Create bill rows for every agenda item typed as BILL.
     # Sponsor is inferred from the first speech under that agenda item.
-    for aid, item in agenda_items_map.items():
+    for item in agenda_items_with_positions:
         if item["type"] != "BILL":
             continue
 
@@ -222,7 +189,7 @@ def run_pipeline(pdf_path: Path) -> int:
         if sponsor_id is None:
             sponsor_row = conn.execute(
                 "SELECT member_id FROM speeches WHERE agenda_item_id = ? ORDER BY id ASC LIMIT 1",
-                (aid,),
+                (item["id"],),
             ).fetchone()
             sponsor_id = sponsor_row[0] if sponsor_row else None
 
@@ -230,7 +197,7 @@ def run_pipeline(pdf_path: Path) -> int:
         get_or_create_bill(
             conn,
             title=item["title"],
-            agenda_item_id=aid,
+            agenda_item_id=item["id"],
             bill_number=bill_number,
             bill_year=bill_year,
             introduced_date=normalized["date"],
@@ -240,14 +207,15 @@ def run_pipeline(pdf_path: Path) -> int:
     bills = extract_bills(raw_text)
     for bill_data in bills:
         matching_aid = None
-        for aid, item in agenda_items_map.items():
-            if item["type"] == "BILL":
-                title_words = [
-                    w for w in bill_data["title"].lower().split() if len(w) > 4
-                ]
-                if any(word in item["title"].lower() for word in title_words):
-                    matching_aid = aid
-                    break
+        for item in agenda_items_with_positions:
+            if item["type"] != "BILL":
+                continue
+            title_words = [
+                w for w in bill_data["title"].lower().split() if len(w) > 4
+            ]
+            if any(word in item["title"].lower() for word in title_words):
+                matching_aid = item["id"]
+                break
 
         bill_id = get_or_create_bill(
             conn,
@@ -257,7 +225,7 @@ def run_pipeline(pdf_path: Path) -> int:
             bill_year=bill_data.get("bill_year"),
             introduced_date=normalized["date"],
         )
-        if bill_data.get("reading"):
+        if bill_data.get("reading") or bill_data.get("outcome"):
             insert_bill_reading(
                 conn,
                 bill_id=bill_id,
