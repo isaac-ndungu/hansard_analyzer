@@ -65,17 +65,6 @@ CREATE TABLE IF NOT EXISTS agenda_item_topics (
 );
 """
 
-# DEPRECATED — kept for migration safety.
-# Topics are now stored in agenda_item_topics, keyed to agenda_items.
-SPEECH_TOPICS_TABLE = """
-CREATE TABLE IF NOT EXISTS speech_topics (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    speech_id  INTEGER NOT NULL REFERENCES speeches(id),
-    topic      TEXT NOT NULL,
-    confidence REAL
-);
-"""
-
 AI_SUMMARIES_TABLE = """
 CREATE TABLE IF NOT EXISTS ai_summaries (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -146,7 +135,6 @@ def create_tables(conn: sqlite3.Connection) -> None:
         AGENDA_ITEMS_TABLE,
         SPEECHES_TABLE,
         AGENDA_ITEM_TOPICS_TABLE,
-        SPEECH_TOPICS_TABLE,
         AI_SUMMARIES_TABLE,
         BILLS_TABLE,
         BILL_READINGS_TABLE,

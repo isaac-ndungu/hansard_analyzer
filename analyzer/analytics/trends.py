@@ -28,11 +28,12 @@ def get_topic_trend(
             f"""
             SELECT
                 strftime('{strftime_format}', se.date) AS period,
-                COUNT(DISTINCT st.speech_id)           AS count
-            FROM speech_topics st
-            JOIN speeches sp ON st.speech_id = sp.id
+                COUNT(DISTINCT sp.id)                 AS count
+            FROM agenda_item_topics ait
+            JOIN agenda_items ai ON ait.agenda_item_id = ai.id
+            JOIN speeches sp ON sp.agenda_item_id = ai.id
             JOIN sessions se ON sp.session_id = se.id
-            WHERE st.topic = ?
+            WHERE ait.topic = ?
             GROUP BY period
             ORDER BY period ASC
             """,
@@ -114,13 +115,14 @@ def get_trending_topics(days: int = 30, limit: int = 10, db_path: Path = DB_PATH
         cursor.execute(
             f"""
             SELECT
-                st.topic,
-                COUNT(*) AS count
-            FROM speech_topics st
-            JOIN speeches sp ON st.speech_id = sp.id
+                ait.topic,
+                COUNT(DISTINCT sp.id) AS count
+            FROM agenda_item_topics ait
+            JOIN agenda_items ai ON ait.agenda_item_id = ai.id
+            JOIN speeches sp ON sp.agenda_item_id = ai.id
             JOIN sessions se ON sp.session_id = se.id
             WHERE se.date >= date('now', ? || ' days')
-            GROUP BY st.topic
+            GROUP BY ait.topic
             ORDER BY count DESC
             LIMIT {int(limit)}
             """,

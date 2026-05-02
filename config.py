@@ -61,7 +61,8 @@ SECTION_HEADINGS = [
 
 TOPIC_MAP ={
     "healthcare": [
-        "health", "hospital", "doctor", "nurse", "patient", "clinic", "medicine",
+        "health", "healthcare", "hospital", "hospitals", "doctor", "nurse", "nurses",
+        "patient", "clinic", "medicine",
         "SHA", "NHIF", "KMTC", "malaria", "disease", "mental health", "maternal",
         "pharmaceutical", "ambulance", "dispensary", "surgery", "treatment",
     ],
@@ -69,6 +70,7 @@ TOPIC_MAP ={
         "school", "teacher", "TSC", "university", "student", "curriculum",
         "TVET", "college", "bursary", "tuition", "CBC", "exam", "KNEC",
         "primary", "secondary", "polytechnic", "literacy", "scholarship",
+        "education", 
     ],
     "infrastructure": [
         "road", "bridge", "KeRRA", "KURA", "KENHA", "railway", "airport",

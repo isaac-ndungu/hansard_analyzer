@@ -83,8 +83,9 @@ def get_topic_sentiment(topic: str, db_path: Path = DB_PATH) -> dict:
             """
             SELECT sp.content
             FROM speeches sp
-            JOIN speech_topics st ON st.speech_id = sp.id
-            WHERE st.topic = ?
+            JOIN agenda_items ai ON sp.agenda_item_id = ai.id
+            JOIN agenda_item_topics ait ON ait.agenda_item_id = ai.id
+            WHERE ait.topic = ?
             """,
             (topic,),
         )

@@ -34,17 +34,39 @@ def conn():
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
             session_id      INTEGER NOT NULL REFERENCES sessions(id),
             member_id       INTEGER NOT NULL REFERENCES members(id),
+            agenda_item_id  INTEGER REFERENCES agenda_items(id),
             section         TEXT,
             content         TEXT NOT NULL,
             word_count      INTEGER,
             sentiment_score REAL,
             created_at      TEXT
         );
-        CREATE TABLE speech_topics (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            speech_id  INTEGER NOT NULL REFERENCES speeches(id),
-            topic      TEXT NOT NULL,
-            confidence REAL
+        CREATE TABLE agenda_items (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id   INTEGER NOT NULL REFERENCES sessions(id),
+            title        TEXT NOT NULL,
+            type         TEXT NOT NULL,
+            sequence     INTEGER,
+            raw_heading  TEXT,
+            created_at   TEXT
+        );
+        CREATE TABLE agenda_item_topics (
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            agenda_item_id INTEGER NOT NULL REFERENCES agenda_items(id),
+            topic          TEXT NOT NULL,
+            confidence     REAL,
+            UNIQUE(agenda_item_id, topic)
+        );
+        CREATE TABLE bills (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            agenda_item_id  INTEGER REFERENCES agenda_items(id),
+            bill_number     TEXT,
+            bill_year       INTEGER,
+            title           TEXT NOT NULL,
+            sponsor_id      INTEGER REFERENCES members(id),
+            current_status  TEXT,
+            introduced_date TEXT,
+            last_activity   TEXT
         );
     """)
     yield connection
@@ -120,20 +142,16 @@ class TestGetOrCreateMember:
 
 class TestGetOrCreateBill:
     def test_creates_bill_record_for_title(self, conn):
+        
+        from analyzer.database.queries import get_or_create_bill
+
         conn.execute(
-            """
-            CREATE TABLE bills (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                agenda_item_id INTEGER,
-                bill_number TEXT,
-                bill_year INTEGER,
-                title TEXT NOT NULL,
-                current_status TEXT,
-                introduced_date TEXT,
-                last_activity TEXT
-            )
-            """
+            "INSERT INTO sessions (date, chamber, pdf_path) VALUES ('2026-04-07', 'National Assembly', 'pdfs/test.pdf')"
         )
+        conn.execute(
+            "INSERT INTO agenda_items (session_id, title, type, sequence) VALUES (1, 'Test Item', 'BILL', 1)"
+        )
+
         from analyzer.database.queries import get_or_create_bill
         bill_id = get_or_create_bill(
             conn,
@@ -148,21 +166,14 @@ class TestGetOrCreateBill:
         assert row == ("8", 2026)
 
     def test_updates_existing_bill_with_missing_metadata(self, conn):
-        conn.execute(
-            """
-            CREATE TABLE bills (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                agenda_item_id INTEGER,
-                bill_number TEXT,
-                bill_year INTEGER,
-                title TEXT NOT NULL,
-                current_status TEXT,
-                introduced_date TEXT,
-                last_activity TEXT
-            )
-            """
-        )
+        
         from analyzer.database.queries import get_or_create_bill
+        conn.execute(
+                "INSERT INTO sessions (date, chamber, pdf_path) VALUES ('2026-04-07', 'National Assembly', 'pdfs/test.pdf')"
+            )
+        conn.execute(
+                "INSERT INTO agenda_items (session_id, title, type, sequence) VALUES (1, 'Test Item', 'BILL', 1)"
+            )
         bill_id = get_or_create_bill(
             conn,
             title="Quality Healthcare and Patient Safety Bill",
@@ -226,9 +237,9 @@ def seeded_conn(conn):
     s_id = insert_session(conn, "2026-04-14", "National Assembly", 13, 5, 28, None, "pdfs/test.pdf")
     m1 = get_or_create_member(conn, "Hon MP One", "Nairobi", "UDA")
     m2 = get_or_create_member(conn, "Hon MP Two", "Mombasa", "ODM")
-    insert_speech(conn, s_id, m1, "BILLS", "We support the healthcare bill fully.", 7)
-    insert_speech(conn, s_id, m1, "PETITIONS", "Roads in this county are terrible.", 7)
-    insert_speech(conn, s_id, m2, "BILLS", "The education budget must be increased.", 7)
+    insert_speech(conn, s_id, m1, None, "BILLS", "We support the healthcare bill fully.", 7)
+    insert_speech(conn, s_id, m1, None, "PETITIONS", "Roads in this county are terrible.", 7)
+    insert_speech(conn, s_id, m2, None, "BILLS", "The education budget must be increased.", 7)
     return conn
 
 
@@ -237,7 +248,7 @@ class TestInsertSpeech:
         from analyzer.database.queries import insert_speech
         s_id = seeded_conn.execute("SELECT id FROM sessions LIMIT 1").fetchone()[0]
         m_id = seeded_conn.execute("SELECT id FROM members LIMIT 1").fetchone()[0]
-        result = insert_speech(seeded_conn, s_id, m_id, "MOTIONS", "I support this motion.", 5)
+        result = insert_speech(seeded_conn, s_id, m_id, None, "MOTIONS", "I support this motion.", 5)
         assert isinstance(result, int)
 
     def test_speech_stored_in_database(self, seeded_conn):
@@ -265,31 +276,6 @@ class TestGetSpeechesByMember:
         assert dates == sorted(dates, reverse=True)
 
 
-class TestSearchSpeeches:
-    def test_returns_matching_speeches(self, seeded_conn):
-        from analyzer.database.queries import search_speeches
-        result = search_speeches(seeded_conn, "healthcare")
-        assert len(result) == 1
-
-    def test_case_insensitive_match(self, seeded_conn):
-        from analyzer.database.queries import search_speeches
-        result_lower = search_speeches(seeded_conn, "roads")
-        result_upper = search_speeches(seeded_conn, "ROADS")
-        assert len(result_lower) == len(result_upper)
-
-    def test_returns_empty_for_no_match(self, seeded_conn):
-        from analyzer.database.queries import search_speeches
-        result = search_speeches(seeded_conn, "zzzzznomatch")
-        assert result == []
-
-    def test_returns_list_of_dicts(self, seeded_conn):
-        from analyzer.database.queries import search_speeches
-        result = search_speeches(seeded_conn, "bill")
-        assert isinstance(result, list)
-        if result:
-            assert isinstance(result[0], dict)
-
-
 # Database stats tests
 
 class TestGetDatabaseStats:
@@ -303,8 +289,9 @@ class TestGetDatabaseStats:
         result = get_database_stats(seeded_conn)
         assert "sessions" in result
         assert "members" in result
+        assert "agenda_items" in result
         assert "speeches" in result
-        assert "speech_topics" in result
+        assert "agenda_item_topics" in result
 
     def test_correct_counts(self, seeded_conn):
         from analyzer.database.queries import get_database_stats

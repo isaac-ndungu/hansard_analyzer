@@ -41,6 +41,7 @@ def db_conn():
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
             session_id      INTEGER NOT NULL REFERENCES sessions(id),
             member_id       INTEGER NOT NULL REFERENCES members(id),
+            agenda_item_id  INTEGER REFERENCES agenda_items(id),
             section         TEXT,
             content         TEXT NOT NULL,
             word_count      INTEGER,
@@ -48,11 +49,22 @@ def db_conn():
             created_at      TEXT
         );
 
-        CREATE TABLE speech_topics (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            speech_id  INTEGER NOT NULL REFERENCES speeches(id),
-            topic      TEXT NOT NULL,
-            confidence REAL
+        CREATE TABLE agenda_items (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id   INTEGER NOT NULL REFERENCES sessions(id),
+            title        TEXT NOT NULL,
+            type         TEXT NOT NULL,
+            sequence     INTEGER,
+            raw_heading  TEXT,
+            created_at   TEXT
+        );
+
+        CREATE TABLE agenda_item_topics (
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            agenda_item_id INTEGER NOT NULL REFERENCES agenda_items(id),
+            topic          TEXT NOT NULL,
+            confidence     REAL,
+            UNIQUE(agenda_item_id, topic)
         );
     """)
 
@@ -76,29 +88,34 @@ def db_conn():
         "VALUES ('Millie Odhiambo', 'Suba North', 'ODM', '2026-04-07', '2026-04-07')"
     )
 
-    # Seed speeches — member 1 has 3 speeches, member 2 has 1
+    # Seed agenda items
     conn.execute(
-        "INSERT INTO speeches (session_id, member_id, section, content, word_count, sentiment_score, created_at) "
-        "VALUES (1, 1, 'BILLS', 'The healthcare bill is excellent and we support it fully.', 10, 0.6, '2026-04-07T14:00:00')"
-    )
-    conn.execute(
-        "INSERT INTO speeches (session_id, member_id, section, content, word_count, sentiment_score, created_at) "
-        "VALUES (1, 1, 'PETITIONS', 'Roads in my constituency are in a terrible state of disrepair.', 11, -0.3, '2026-04-07T15:00:00')"
-    )
-    conn.execute(
-        "INSERT INTO speeches (session_id, member_id, section, content, word_count, sentiment_score, created_at) "
-        "VALUES (2, 1, 'BILLS', 'The education reforms are good and necessary for our children.', 11, 0.5, '2026-04-14T14:00:00')"
-    )
-    conn.execute(
-        "INSERT INTO speeches (session_id, member_id, section, content, word_count, sentiment_score, created_at) "
-        "VALUES (1, 2, 'PETITIONS', 'Human rights violations continue to be a serious concern for all Kenyans.', 13, -0.1, '2026-04-07T14:30:00')"
+        "INSERT INTO agenda_items (session_id, title, type, sequence, raw_heading, created_at) "
+        "VALUES (1, 'Healthcare Bill', 'BILL', 1, 'Healthcare Bill', '2026-04-07T13:00:00')"
     )
 
-    # Seed speech topics
-    conn.execute("INSERT INTO speech_topics (speech_id, topic, confidence) VALUES (1, 'healthcare', 0.8)")
-    conn.execute("INSERT INTO speech_topics (speech_id, topic, confidence) VALUES (2, 'infrastructure', 0.6)")
-    conn.execute("INSERT INTO speech_topics (speech_id, topic, confidence) VALUES (3, 'education', 0.7)")
-    conn.execute("INSERT INTO speech_topics (speech_id, topic, confidence) VALUES (4, 'security', 0.5)")
+    # Seed speeches — member 1 has 3 speeches, member 2 has 1
+    conn.execute(
+        "INSERT INTO speeches (session_id, member_id, agenda_item_id, section, content, word_count, sentiment_score, created_at) "
+        "VALUES (1, 1, 1, 'BILLS', 'The healthcare bill is excellent and we support it fully.', 10, 0.6, '2026-04-07T14:00:00')"
+    )
+    conn.execute(
+        "INSERT INTO speeches (session_id, member_id, agenda_item_id, section, content, word_count, sentiment_score, created_at) "
+        "VALUES (1, 1, 1, 'PETITIONS', 'Roads in my constituency are in a terrible state of disrepair.', 11, -0.3, '2026-04-07T15:00:00')"
+    )
+    conn.execute(
+        "INSERT INTO speeches (session_id, member_id, agenda_item_id, section, content, word_count, sentiment_score, created_at) "
+        "VALUES (2, 1, 1, 'BILLS', 'The education reforms are good and necessary for our children.', 11, 0.5, '2026-04-14T14:00:00')"
+    )
+    conn.execute(
+        "INSERT INTO speeches (session_id, member_id, agenda_item_id, section, content, word_count, sentiment_score, created_at) "
+        "VALUES (1, 2, NULL, 'PETITIONS', 'Human rights violations continue to be a serious concern for all Kenyans.', 13, -0.1, '2026-04-07T14:30:00')"
+    )
+
+    # Seed agenda item topics
+    conn.execute("INSERT INTO agenda_item_topics (agenda_item_id, topic, confidence) VALUES (1, 'healthcare', 0.8)")
+    conn.execute("INSERT INTO agenda_item_topics (agenda_item_id, topic, confidence) VALUES (1, 'infrastructure', 0.6)")
+    conn.execute("INSERT INTO agenda_item_topics (agenda_item_id, topic, confidence) VALUES (1, 'education', 0.7)")
 
     conn.commit()
     yield conn
@@ -381,38 +398,38 @@ class TestUpdateSpeechSentiments:
 
 # topics tests
 
-class TestClassifySpeechTopics:
+class TestClassifyAgendaTitle:
     def test_returns_list(self):
-        from analyzer.analytics.topics import classify_speech_topics
-        result = classify_speech_topics("The doctor treated the patient at the hospital.")
+        from analyzer.analytics.topics import classify_agenda_title
+        result = classify_agenda_title("Health and social services bill")
         assert isinstance(result, list)
 
     def test_known_keyword_matches_correct_topic(self):
-        from analyzer.analytics.topics import classify_speech_topics
-        result = classify_speech_topics("The hospital needs more doctors and nurses.")
+        from analyzer.analytics.topics import classify_agenda_title
+        result = classify_agenda_title("A bill about hospitals and nurses")
         topics = [r["topic"] for r in result]
         assert "healthcare" in topics
 
     def test_no_keywords_returns_empty_list(self):
-        from analyzer.analytics.topics import classify_speech_topics
-        result = classify_speech_topics("Xyz qrs tuv wxy zab cde.")
+        from analyzer.analytics.topics import classify_agenda_title
+        result = classify_agenda_title("Xyz qrs tuv wxy zab cde.")
         assert result == []
 
     def test_multiple_topics_detected(self):
-        from analyzer.analytics.topics import classify_speech_topics
-        result = classify_speech_topics(
-            "The school teacher needs a hospital and better roads to reach students."
+        from analyzer.analytics.topics import classify_agenda_title
+        result = classify_agenda_title(
+            "Education and road infrastructure need urgent attention."
         )
         topics = [r["topic"] for r in result]
         assert len(topics) >= 2
 
     def test_empty_content_returns_empty_list(self):
-        from analyzer.analytics.topics import classify_speech_topics
-        assert classify_speech_topics("") == []
+        from analyzer.analytics.topics import classify_agenda_title
+        assert classify_agenda_title("") == []
 
     def test_result_has_correct_keys(self):
-        from analyzer.analytics.topics import classify_speech_topics
-        result = classify_speech_topics("The hospital doctor treated the patient.")
+        from analyzer.analytics.topics import classify_agenda_title
+        result = classify_agenda_title("A bill to improve hospital care.")
         if result:
             assert "topic" in result[0]
             assert "confidence" in result[0]

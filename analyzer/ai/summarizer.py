@@ -258,10 +258,12 @@ def summarize_mp(member_id: int, db_path: str) -> str:
         
         # Fetch top topics
         cursor.execute("""
-            SELECT topic, COUNT(*) as count
-            FROM speech_topics
-            WHERE speech_id IN (SELECT id FROM speeches WHERE member_id = ?)
-            GROUP BY topic
+            SELECT ait.topic, COUNT(*) as count
+            FROM agenda_item_topics ait
+            JOIN agenda_items ai ON ait.agenda_item_id = ai.id
+            JOIN speeches sp ON sp.agenda_item_id = ai.id
+            WHERE sp.member_id = ?
+            GROUP BY ait.topic
             ORDER BY count DESC
             LIMIT 5
         """, (member_id,))

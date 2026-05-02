@@ -93,7 +93,8 @@ def get_topic_frequency(
 def get_mp_topics(member_id: int, db_path: Path = DB_PATH) -> list[dict]:
     """
     Returns topics an MP has engaged with, derived from the agenda items
-    they spoke in. Replaces the old speech_topics based version.
+    they spoke in. This uses agenda_item_topics instead of the deprecated
+    speech_topics table.
     Each dict: {topic, count}
     """
     conn = get_connection(db_path)

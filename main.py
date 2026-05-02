@@ -220,39 +220,5 @@ def cmd_mp_list():
     console.print(table)
 
 
-# Search
-
-@cli.command("search")
-@click.argument("keyword")
-def cmd_search(keyword):
-    """Search all speeches for a keyword."""
-    conn = get_connection()
-    from analyzer.database.queries import search_speeches
-    results = search_speeches(conn, keyword)
-    conn.close()
-
-    if not results:
-        console.print(f"No speeches found containing '{keyword}'.")
-        return
-
-    table = Table(title=f"{len(results)} result(s) for '{keyword}'", show_header=True)
-    table.add_column("Date")
-    table.add_column("Member", style="cyan")
-    table.add_column("Constituency")
-    table.add_column("Words", justify="right")
-    table.add_column("Excerpt")
-
-    for row in results[:20]:
-        table.add_row(
-            row.get("date", ""),
-            row.get("member_name", ""),
-            row.get("constituency", ""),
-            str(row.get("word_count", 0)),
-            row.get("content", "")[:80] + "...",
-        )
-
-    console.print(table)
-
-
 if __name__ == "__main__":
     cli()

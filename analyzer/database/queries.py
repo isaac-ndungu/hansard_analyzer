@@ -170,7 +170,7 @@ def insert_speech(
             content,
             word_count,
             sentiment_score,
-            datetime.utcnow().isoformat(),
+            datetime.now(timezone.utc).isoformat(),
         ),
     )
     conn.commit()
@@ -192,39 +192,6 @@ def get_speeches_by_member(
         WHERE sp.member_id = ?
     """
     params: list = [member_id]
-
-    if from_date is not None:
-        query += " AND se.date >= ?"
-        params.append(from_date)
-
-    if to_date is not None:
-        query += " AND se.date <= ?"
-        params.append(to_date)
-
-    query += " ORDER BY se.date DESC"
-
-    cursor.execute(query, params)
-    columns = [description[0] for description in cursor.description]
-    return [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-
-def get_speeches_by_topic(
-    conn: sqlite3.Connection,
-    topic: str,
-    from_date: Optional[str] = None,
-    to_date: Optional[str] = None,
-) -> list[dict]:
-    cursor = conn.cursor()
-
-    query = """
-        SELECT sp.*, se.date, m.name AS member_name, m.constituency, m.party
-        FROM speeches sp
-        JOIN sessions se ON sp.session_id = se.id
-        JOIN members m ON sp.member_id = m.id
-        JOIN speech_topics st ON st.speech_id = sp.id
-        WHERE st.topic = ?
-    """
-    params: list = [topic]
 
     if from_date is not None:
         query += " AND se.date >= ?"
@@ -682,23 +649,6 @@ def search_mp_participation(
     )
     columns = [d[0] for d in cursor.description]
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-
-# Speech Topic Queries
-
-def insert_speech_topic(
-    conn: sqlite3.Connection,
-    speech_id: int,
-    topic: str,
-    confidence: float,
-) -> int:
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO speech_topics (speech_id, topic, confidence) VALUES (?, ?, ?)",
-        (speech_id, topic, confidence),
-    )
-    conn.commit()
-    return cursor.lastrowid
 
 
 # Summary Queries
