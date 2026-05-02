@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, abort
+from flask import Blueprint, render_template, abort, request
 from collections import defaultdict
 from analyzer.database.seed import get_connection
 from analyzer.analytics.trends import get_all_sessions_list
+from analyzer.utils.pagination import paginate
 from flask import jsonify
 from analyzer.ai.cache import get_cached_summary, save_summary
 from analyzer.ai.summarizer import summarize_session
@@ -16,8 +17,12 @@ sessions_bp = Blueprint("sessions", __name__)
 
 @sessions_bp.route("/")
 def session_list():
+    page     = request.args.get("page", 1, type=int)
+    per_page = 20
+
     sessions = get_all_sessions_list()
-    return render_template("sessions.html", sessions=sessions)
+    p = paginate(sessions, page, per_page)
+    return render_template("sessions.html", sessions=p["items"], pagination=p)
 
 @sessions_bp.route("/<int:session_id>")
 def session_detail(session_id):

@@ -1,18 +1,22 @@
-from flask import Blueprint, render_template, abort
+from flask import Blueprint, render_template, abort, request
 from analyzer.database.seed import get_connection
 from analyzer.database.queries import get_all_bills, get_bill_with_readings
+from analyzer.utils.pagination import paginate
 
 bills_bp = Blueprint("bills", __name__)
 
 
 @bills_bp.route("/")
 def bills_list():
-    conn = get_connection()
-    bills = get_all_bills(conn)
+    page     = request.args.get("page", 1, type=int)
+    per_page = 25
 
+    conn = get_connection()
+    all_bills = get_all_bills(conn)
     conn.close()
 
-    return render_template("bills.html", bills=bills)
+    p = paginate(all_bills, page, per_page)
+    return render_template("bills.html", bills=p["items"], pagination=p)
 
 
 @bills_bp.route("/<int:bill_id>")

@@ -1,0 +1,56 @@
+{% if p.total_pages > 1 %}
+<div class="flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
+
+    <p class="text-sm text-gray-400">
+        Showing
+        <span class="font-medium text-gray-700">{{ p.start_item }}–{{ p.end_item }}</span>
+        of
+        <span class="font-medium text-gray-700">{{ p.total }}</span>
+    </p>
+
+    <div class="flex items-center gap-1">
+
+        {% if p.has_prev %}
+        <a href="?page={{ p.prev_page }}{{ '&' + extra_params if extra_params else '' }}"
+           class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 border border-gray-200
+                  rounded-lg hover:border-gray-400 transition-colors">
+            &larr; Prev
+        </a>
+        {% else %}
+        <span class="px-3 py-1.5 text-sm text-gray-300 border border-gray-100
+                     rounded-lg cursor-not-allowed">
+            &larr; Prev
+        </span>
+        {% endif %}
+
+        {% for num in p.page_range %}
+        {% if num == p.page %}
+        <span class="px-3 py-1.5 text-sm font-semibold text-white bg-green-600
+                     border border-green-600 rounded-lg">
+            {{ num }}
+        </span>
+        {% else %}
+        <a href="?page={{ num }}{{ '&' + extra_params if extra_params else '' }}"
+           class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 border border-gray-200
+                  rounded-lg hover:border-gray-400 transition-colors">
+            {{ num }}
+        </a>
+        {% endif %}
+        {% endfor %}
+
+        {% if p.has_next %}
+        <a href="?page={{ p.next_page }}{{ '&' + extra_params if extra_params else '' }}"
+           class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 border border-gray-200
+                  rounded-lg hover:border-gray-400 transition-colors">
+            Next &rarr;
+        </a>
+        {% else %}
+        <span class="px-3 py-1.5 text-sm text-gray-300 border border-gray-100
+                     rounded-lg cursor-not-allowed">
+            Next &rarr;
+        </span>
+        {% endif %}
+
+    </div>
+</div>
+{% endif %}

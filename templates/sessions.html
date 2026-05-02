@@ -35,6 +35,10 @@
     </a>
     {% endfor %}
 </div>
+
+{% set p = pagination %}
+{% set extra_params = '' %}
+{% include 'pagination.html' %}
 {% else %}
 <div class="border border-gray-200 rounded-xl p-8 bg-gray-50 text-center">
     <p class="text-gray-600 text-sm">No sessions in the database yet. Run <code class="bg-gray-200 px-2 py-1 rounded text-xs">flask sync</code> to ingest Hansard data.</p>

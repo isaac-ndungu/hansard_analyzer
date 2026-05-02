@@ -118,6 +118,10 @@
         {% else %}
         <p class="text-sm text-gray-400">No speeches recorded for this agenda item.</p>
         {% endif %}
+
+    {% set p = pagination %}
+    {% set extra_params = '' %}
+    {% include 'pagination.html' %}
     </div>
 
     <div>

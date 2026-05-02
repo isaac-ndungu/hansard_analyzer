@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, abort
+from flask import Blueprint, render_template, abort, request
 from analyzer.database.seed import get_connection
 from analyzer.database.queries import (
     get_agenda_item_by_id,
@@ -6,29 +6,33 @@ from analyzer.database.queries import (
     get_topics_for_agenda_item,
 )
 from analyzer.analytics.sentiment import score_label
+from analyzer.utils.pagination import paginate
 
 agenda_items_bp = Blueprint("agenda_items", __name__)
 
 
 @agenda_items_bp.route("/<int:agenda_item_id>")
 def agenda_item_detail(agenda_item_id):
+    page     = request.args.get("page", 1, type=int)
+    per_page = 20
+
     conn = get_connection()
     item = get_agenda_item_by_id(conn, agenda_item_id)
     if not item:
         conn.close()
         abort(404)
 
-    speeches = get_speeches_by_agenda_item(conn, agenda_item_id)
+    all_speeches = get_speeches_by_agenda_item(conn, agenda_item_id)
     topics = get_topics_for_agenda_item(conn, agenda_item_id)
-
     conn.close()
 
-    scored = [s["sentiment_score"] for s in speeches if s["sentiment_score"] is not None]
+    scored = [s["sentiment_score"] for s in all_speeches if s["sentiment_score"] is not None]
     avg_sentiment = round(sum(scored) / len(scored), 3) if scored else 0.0
     sentiment_label = score_label(avg_sentiment)
+    total_words = sum(s["word_count"] or 0 for s in all_speeches)
 
     speakers = {}
-    for speech in speeches:
+    for speech in all_speeches:
         mid = speech["member_id"]
         if mid not in speakers:
             speakers[mid] = {
@@ -41,17 +45,19 @@ def agenda_item_detail(agenda_item_id):
         speakers[mid]["count"] += 1
 
     top_speakers = sorted(speakers.values(), key=lambda x: x["count"], reverse=True)
+    p = paginate(all_speeches, page, per_page)
 
     return render_template(
         "agenda_item.html",
         item=item,
-        speeches=speeches,
+        speeches=p["items"],
+        pagination=p,
         topics=topics,
         top_speakers=top_speakers,
         avg_sentiment=avg_sentiment,
         sentiment_label=sentiment_label,
-        total_words=sum(s["word_count"] or 0 for s in speeches),
-        total_speeches=len(speeches),
+        total_words=total_words,
+        total_speeches=len(all_speeches),
     )
 
 @agenda_items_bp.route("/<int:agenda_item_id>/summary", methods=["POST"])

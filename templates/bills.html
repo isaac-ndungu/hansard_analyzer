@@ -60,6 +60,10 @@
         </tbody>
     </table>
 </div>
+
+{% set p = pagination %}
+{% set extra_params = '' %}
+{% include 'pagination.html' %}
 {% else %}
 <p class="text-sm text-gray-400">
     No bills in the database yet. Run the sync pipeline to load data.
