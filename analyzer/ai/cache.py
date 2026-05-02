@@ -7,7 +7,7 @@ from config import DB_PATH
 
 logger = logging.getLogger(__name__)
 
-CACHE_TTL_DAYS = 7  # Regenerate summaries older than 7 days
+CACHE_TTL_DAYS = 14  # Regenerate summaries older than 7 days
 
 
 def get_cached_summary(entity_type: str, entity_id: int, db_path: Path = DB_PATH):

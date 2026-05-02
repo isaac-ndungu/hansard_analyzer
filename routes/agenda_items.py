@@ -53,3 +53,30 @@ def agenda_item_detail(agenda_item_id):
         total_words=sum(s["word_count"] or 0 for s in speeches),
         total_speeches=len(speeches),
     )
+
+@agenda_items_bp.route("/<int:agenda_item_id>/summary", methods=["POST"])
+def agenda_item_summary(agenda_item_id):
+    """
+    Generates or retrieves a cached AI summary for an agenda item.
+    Returns JSON: {summary: str, cached: bool}
+    """
+    from flask import jsonify
+    from analyzer.ai.cache import get_cached_summary, save_summary
+    from analyzer.ai.summarizer import summarize_agenda_item
+    from config import DB_PATH
+
+    cached = get_cached_summary("agenda_item", agenda_item_id, DB_PATH)
+    if cached:
+        return jsonify({"summary": cached["summary"], "cached": True})
+
+    summary = summarize_agenda_item(agenda_item_id, DB_PATH)
+
+    fallback_responses = {
+        "Summary could not be generated.",
+        "Summary could not be generated — API key not configured.",
+        "No speeches found for this agenda item.",
+    }
+    if summary and summary not in fallback_responses:
+        save_summary("agenda_item", agenda_item_id, summary, DB_PATH)
+
+    return jsonify({"summary": summary, "cached": False})
