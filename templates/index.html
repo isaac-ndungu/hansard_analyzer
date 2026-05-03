@@ -130,7 +130,7 @@
                                 <div>
                                     <div
                                         class="text-sm font-semibold text-gray-800 group-hover:text-green-700 transition-colors">
-                                        {{ session.date }}
+                                        {{ session.date|format_date }}
                                     </div>
                                     <div class="text-xs text-gray-400">
                                         Vol. {{ session.volume or '—' }} · No. {{ session.issue or '—' }}

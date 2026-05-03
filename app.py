@@ -35,8 +35,23 @@ def create_app():
         except Exception as e:
             return jsonify({"status": "error", "message": str(e)}), 500
 
-    return app
+    @app.template_filter('format_date')
+    def format_date_filter(date_str):
+        if not date_str:
+            return ""
+        from datetime import datetime
+        try:
+            dt = datetime.strptime(date_str, "%Y-%m-%d")
+            day = dt.day
+            if 4 <= day <= 20 or 24 <= day <= 30:
+                suffix = "th"
+            else:
+                suffix = ["st", "nd", "rd"][day % 10 - 1]
+            return f"{dt.strftime('%A')}, {day}{suffix} {dt.strftime('%B %Y')}"
+        except ValueError:
+            return date_str
 
+    return app
 
 if __name__ == "__main__":
     app = create_app()

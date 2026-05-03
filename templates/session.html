@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ session.date }} — Hansard Analyzer{% endblock %}
+{% block title %}{{ session.date|format_date }} — Hansard Analyzer{% endblock %}
 
 {% block content %}
 
@@ -9,12 +9,12 @@
     <a href="{{ url_for('sessions.session_list') }}"
         class="text-gray-600 hover:text-green-600 transition-colors">Sessions</a>
     <span class="text-gray-400">•</span>
-    <span class="text-gray-900 font-medium">{{ session.date }}</span>
+    <span class="text-gray-900 font-medium">{{ session.date|format_date }}</span>
 </div>
 
 <!-- Header -->
 <div class="mb-10">
-    <h1 class="font-sans text-4xl sm:text-5xl font-black text-gray-900 tracking-wide mb-2">{{ session.date }}</h1>
+    <h1 class="font-sans text-4xl sm:text-5xl font-black text-gray-900 tracking-wide mb-2">{{ session.date|format_date }}</h1>
     <div class="h-1 w-20 bg-green-500 mb-4"></div>
     <p class="text-gray-600 text-base font-semibold tracking-wide">
         {{ session.chamber }}
