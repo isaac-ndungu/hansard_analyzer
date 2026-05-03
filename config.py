@@ -145,4 +145,4 @@ class Config:
     DB_PATH = str(DB_PATH)
     GEMINI_API_KEY = GEMINI_API_KEY
     GEMINI_MODEL = GEMINI_MODEL
-    DEBUG = os.getenv('FLASK_ENV') == 'development'
+    DEBUG = os.getenv('FLASK_ENV') == 'development' 
