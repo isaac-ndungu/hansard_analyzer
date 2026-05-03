@@ -29,38 +29,62 @@ def get_available_hansards(from_date: str, to_date: str) -> list[dict]:
     Each result dict contains: date, url, volume, issue, chamber.
     """
     session = _build_session()
-
-    try:
-        response = session.get(HANSARD_BASE_URL, timeout=30)
-        response.raise_for_status()
-    except requests.RequestException as error:
-        logger.error("Failed to fetch Hansard listing: %s", error)
-        return []
-
-    soup = BeautifulSoup(response.text, "html.parser")
     available = []
-
+    
     from_dt = datetime.strptime(from_date, "%Y-%m-%d")
     to_dt = datetime.strptime(to_date, "%Y-%m-%d")
+    
+    page = 0
+    seen_urls = set()
 
-    for link in soup.find_all("a", href=True):
-        href = link["href"]
-
-        if not href.lower().endswith(".pdf"):
-            continue
-
-        metadata = _extract_metadata_from_link(link, href)
-
-        if metadata is None:
-            continue
-
+    while True:
+        url = f"{HANSARD_BASE_URL}?page={page}"
+        logger.info("Scraping %s", url)
         try:
-            doc_date = datetime.strptime(metadata["date"], "%Y-%m-%d")
-        except ValueError:
-            continue
+            response = session.get(url, timeout=30)
+            response.raise_for_status()
+        except requests.RequestException as error:
+            logger.error("Failed to fetch Hansard listing page %d: %s", page, error)
+            break
 
-        if from_dt <= doc_date <= to_dt:
-            available.append(metadata)
+        soup = BeautifulSoup(response.text, "html.parser")
+        
+        page_pdf_count = 0
+        oldest_on_page = datetime.max
+
+        for link in soup.find_all("a", href=True):
+            href = link["href"]
+
+            if not href.lower().endswith(".pdf"):
+                continue
+
+            metadata = _extract_metadata_from_link(link, href)
+            if metadata is None:
+                continue
+
+            try:
+                doc_date = datetime.strptime(metadata["date"], "%Y-%m-%d")
+            except ValueError:
+                continue
+                
+            page_pdf_count += 1
+            if doc_date < oldest_on_page:
+                oldest_on_page = doc_date
+
+            if from_dt <= doc_date <= to_dt:
+                if metadata["url"] not in seen_urls:
+                    seen_urls.add(metadata["url"])
+                    available.append(metadata)
+
+        if page_pdf_count == 0:
+            logger.info("No PDFs found on page %d, stopping pagination.", page)
+            break
+            
+        if oldest_on_page < from_dt:
+            logger.info("Reached documents older than from_date on page %d, stopping pagination.", page)
+            break
+            
+        page += 1
 
     return available
 
@@ -72,7 +96,7 @@ def _extract_metadata_from_link(link, href: str) -> dict | None:
     """
     text = link.get_text(strip=True)
 
-    date_match = re.search(r"(\d{1,2})[^\d]+(\w+)[^\d]+(\d{4})", text)
+    date_match = re.search(r"(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\s*,?\s*(\d{4})", text)
     if date_match is None:
         return None
 
