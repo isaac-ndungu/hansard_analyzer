@@ -114,7 +114,15 @@ def run_pipeline(pdf_path: Path) -> int:
     )
 
     raw_text = extract_text(pdf_path)
-    agenda_item_dicts = extract_agenda_items(raw_text)
+    raw_agendas = extract_agenda_items(raw_text)
+    
+    # Deduplicate: Keep only the last occurrence of each title to merge TOC and body
+    deduped_agendas = {}
+    for item in raw_agendas:
+        title = item["title"].lower()
+        deduped_agendas[title] = item
+        
+    agenda_item_dicts = sorted(deduped_agendas.values(), key=lambda x: x["position"])
 
     # agenda_items_with_positions: list of agenda items with document offsets
     agenda_items_with_positions = []

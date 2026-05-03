@@ -376,6 +376,15 @@ SECTION_DIVIDER_HEADINGS = {
     "REPUBLIC OF KENYA",
     "THE HANSARD",
     "THIRTEENTH PARLIAMENT",
+    "QUESTIONS AND STATEMENTS",
+    "REQUESTS FOR STATEMENTS",
+    "COMMUNICATIONS FROM THE CHAIR",
+    "PETITIONS",
+    "PAPERS",
+    "NOTICES OF MOTIONS",
+    "MESSAGES",
+    "STATEMENTS",
+    "REPUBLIC OF KENYA",
 }
 
 
@@ -452,6 +461,10 @@ def extract_agenda_items(text: str) -> list[dict]:
         r"electronic version",
         r"^[A-Z]{1,3}$",
         r"^National Assembly Debates",
+        r"REPUBLIC OF KENYA",
+        r"THE HANSARD",
+        r"THIRTEENTH PARLIAMENT",
+        r"SENATE DEBATES",
     ]
 
     items = []
@@ -460,13 +473,16 @@ def extract_agenda_items(text: str) -> list[dict]:
     for match in heading_pattern.finditer(text):
         raw = match.group(1).strip()
 
-        if any(re.search(p, raw, re.IGNORECASE) for p in noise_patterns):
+        # Replace newlines with spaces for consistent divider matching
+        raw_clean = re.sub(r"\s+", " ", raw).strip()
+
+        if any(re.search(p, raw_clean, re.IGNORECASE) for p in noise_patterns):
             continue
 
-        if is_section_divider(raw):
+        if is_section_divider(raw_clean):
             continue
 
-        if len(raw.split()) < 3:
+        if len(raw_clean.split()) < 3:
             continue
 
         sequence += 1
