@@ -12,9 +12,10 @@
 </div>
 
 <!-- Header -->
-<div class="mb-8">
-    <h1 class="font-serif text-3xl sm:text-4xl font-semibold text-gray-900 mb-2">{{ session.date }}</h1>
-    <p class="text-gray-600 text-base">
+<div class="mb-10">
+    <h1 class="font-sans text-4xl sm:text-5xl font-black text-gray-900 tracking-wide mb-2">{{ session.date }}</h1>
+    <div class="h-1 w-20 bg-green-500 mb-4"></div>
+    <p class="text-gray-600 text-base font-semibold tracking-wide">
         {{ session.chamber }}
         {% if session.volume %}<span class="text-gray-400 mx-2">•</span>Vol. {{ session.volume }}{% endif %}
         {% if session.issue %}<span class="text-gray-400 mx-2">•</span>No. {{ session.issue }}{% endif %}

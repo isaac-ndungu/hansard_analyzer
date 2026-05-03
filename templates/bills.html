@@ -3,9 +3,12 @@
 {% block title %}Bills — Hansard Analyzer{% endblock %}
 
 {% block content %}
-<div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Bills</h1>
-    <span class="text-sm text-gray-400">{{ bills|length }} bills</span>
+<div class="mb-10">
+    <div class="flex items-center justify-between mb-2">
+        <h1 class="font-sans text-4xl sm:text-5xl font-black text-gray-900 tracking-wide">Bills</h1>
+        <span class="text-sm font-semibold text-gray-500">{{ bills|length }} bills</span>
+    </div>
+    <div class="h-1 w-20 bg-green-500 mb-4"></div>
 </div>
 
 {% if bills %}

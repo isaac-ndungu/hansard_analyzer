@@ -23,22 +23,20 @@
             Track MPs, follow legislation, explore debates.
         </p>
 
-        <form action="{{ url_for('search.search') }}" method="get" class="flex justify-center px-4">
-            <div class="flex w-full max-w-xl shadow-lg rounded-lg overflow-hidden
-                        border border-white/20 focus-within:ring-2 focus-within:ring-green-400 transition-all">
-                <input
-                    type="text" name="q" required
-                    class="flex-1 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none bg-white"
-                    placeholder="Search speeches, MPs, topics…"
-                    autofocus
-                />
-                <button type="submit"
-                    class="bg-green-600 hover:bg-green-700 transition-colors text-white
-                           px-6 py-3 text-sm font-semibold whitespace-nowrap">
-                    Search
-                </button>
-            </div>
-        </form>
+        <div class="flex flex-col sm:flex-row justify-center gap-4 px-4 mt-8">
+            <a href="{{ url_for('members.member_list') }}"
+               class="bg-green-600 hover:bg-green-700 transition-colors text-white
+                      px-8 py-3.5 rounded-full text-base font-bold shadow-lg flex items-center justify-center gap-2">
+                Browse MPs
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-1a4 4 0 00-5-3.87M9 20H4v-1a4 4 0 015-3.87m8-4a4 4 0 10-8 0 4 4 0 008 0zM5 10a4 4 0 118 0 4 4 0 01-8 0z"/></svg>
+            </a>
+            <a href="{{ url_for('sessions.session_list') }}"
+               class="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 transition-colors text-white
+                      px-8 py-3.5 rounded-full text-base font-bold flex items-center justify-center gap-2">
+                View Sessions
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z"/></svg>
+            </a>
+        </div>
     </div>
 </div>
 

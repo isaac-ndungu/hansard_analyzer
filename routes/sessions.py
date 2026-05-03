@@ -62,8 +62,38 @@ def session_detail(session_id):
         (session_id,),
     )
     total_words = cursor.fetchone()[0]
-    
+
+    # Full speech log with member info
+    cursor.execute(
+        """
+        SELECT sp.id, sp.content, sp.word_count, sp.section, sp.sentiment_score,
+               sp.agenda_item_id, sp.member_id,
+               m.name AS member_name, m.constituency, m.party
+        FROM speeches sp
+        JOIN members m ON sp.member_id = m.id
+        WHERE sp.session_id = ?
+        ORDER BY sp.id ASC
+        """,
+        (session_id,),
+    )
+    speech_cols = [d[0] for d in cursor.description]
+    all_speeches = [dict(zip(speech_cols, r)) for r in cursor.fetchall()]
+
     conn.close()
+
+    # Build top speakers ranked by speech count
+    speaker_map = {}
+    for sp in all_speeches:
+        mid = sp["member_id"]
+        if mid not in speaker_map:
+            speaker_map[mid] = {
+                "member_id": mid,
+                "name": sp["member_name"],
+                "constituency": sp["constituency"],
+                "count": 0,
+            }
+        speaker_map[mid]["count"] += 1
+    top_speakers = sorted(speaker_map.values(), key=lambda x: x["count"], reverse=True)[:8]
 
     items_by_type = defaultdict(list)
     for item in agenda_items:
@@ -81,8 +111,11 @@ def session_detail(session_id):
         items_by_type=ordered_items_by_type,
         total_speakers=total_speakers,
         total_words=total_words,
+        speeches=all_speeches,
+        top_speakers=top_speakers,
     )
-    
+
+
 
 
 @sessions_bp.route("/<int:session_id>/summary", methods=["POST"])

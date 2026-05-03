@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template, abort, request, jsonify
 from analyzer.database.seed import get_connection
 from analyzer.database.queries import (
-    get_all_members,            # for the paginated list
+    get_all_members_with_stats,            # for the paginated list
     get_mp_agenda_items,
 )
-from analyzer.analytics.mp_stats import get_mp_full_profile
+from analyzer.analytics.mp_stats import get_mp_full_profile, get_most_active_mps
 from analyzer.analytics.sentiment import get_mp_sentiment_profile
 from analyzer.analytics.topics import get_mp_topics
 from analyzer.analytics.trends import get_participation_trend
@@ -18,16 +18,18 @@ members_bp = Blueprint("members", __name__)
 
 @members_bp.route("/")
 def member_list():
-    """Paginated list of all members."""
+    """Paginated list of all members with stats."""
     page = request.args.get("page", 1, type=int)
     per_page = 30
 
     conn = get_connection()
-    members = get_all_members(conn)          # plain list of member dicts
+    members = get_all_members_with_stats(conn)
     conn.close()
 
+    top_mp = get_most_active_mps(limit=1)[0] if members else None
+
     p = paginate(members, page, per_page)
-    return render_template("members.html", members=p["items"], pagination=p)
+    return render_template("members.html", members=p["items"], pagination=p, top_mp=top_mp)
 
 
 @members_bp.route("/<int:member_id>")

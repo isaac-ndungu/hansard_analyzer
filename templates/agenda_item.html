@@ -35,7 +35,8 @@
         {% endfor %}
         {% endif %}
     </div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-1">{{ item.title }}</h1>
+    <h1 class="font-sans text-4xl sm:text-5xl font-black text-gray-900 tracking-wide mb-2">{{ item.title }}</h1>
+    <div class="h-1 w-20 bg-green-500 mb-4"></div>
     <p class="text-sm text-gray-400">
         Session {{ item.session_id }}
         {% if sentiment_label == 'Constructive' %}

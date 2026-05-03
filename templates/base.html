@@ -75,10 +75,11 @@
                                         {{ 'border-b-2 border-white' if request.path == url_for('sessions.session_list') else '' }}">
                         Sessions
                     </a>
-                    <a href="{{ url_for('topics.topics_overview') }}"
+
+                    <a href="{{ url_for('bills.bills_list') }}"
                         class="hover:text-white transition-colors whitespace-nowrap
-                                            {{ 'border-b-2 border-white' if request.path == url_for('topics.topics_overview') else '' }}">
-                        Topics
+                                        {{ 'border-b-2 border-white' if request.path == url_for('bills.bills_list') else '' }}">
+                        Bills
                     </a>
                     <a href="{{ url_for('home.about') }}"
                         class="hover:text-white transition-colors whitespace-nowrap
@@ -163,10 +164,11 @@
                             {{ 'border-b-2 border-white inline-block' if request.path == url_for('sessions.session_list') else '' }}">
                     Sessions
                 </a>
-                <a href="{{ url_for('topics.topics_overview') }}"
+
+                <a href="{{ url_for('bills.bills_list') }}"
                     class="block hover:text-white py-1
-                                {{ 'border-b-2 border-white inline-block' if request.path == url_for('topics.topics_overview') else '' }}">
-                    Topics
+                            {{ 'border-b-2 border-white inline-block' if request.path == url_for('bills.bills_list') else '' }}">
+                    Bills
                 </a>
                 <a href="{{ url_for('home.about') }}"
                     class="block hover:text-white py-1
