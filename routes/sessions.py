@@ -104,6 +104,10 @@ def session_detail(session_id):
         t: items_by_type[t] for t in type_order if t in items_by_type
     }
 
+    page = request.args.get("page", 1, type=int)
+    per_page = 20
+    p = paginate(all_speeches, page, per_page)
+
     return render_template(
         "session.html",
         session=session,
@@ -111,8 +115,9 @@ def session_detail(session_id):
         items_by_type=ordered_items_by_type,
         total_speakers=total_speakers,
         total_words=total_words,
-        speeches=all_speeches,
+        speeches=p["items"],
         top_speakers=top_speakers,
+        pagination=p,
     )
 
 
