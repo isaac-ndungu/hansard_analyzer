@@ -5,7 +5,7 @@ from pathlib import Path
 
 import requests
 from bs4 import BeautifulSoup
-
+from datetime import datetime, timezone
 from config import HANSARD_BASE_URL, PDF_DIR
 
 logger = logging.getLogger(__name__)
@@ -142,9 +142,9 @@ def sync_hansards(from_date: str | None = None) -> list[Path]:
     Defaults to syncing from the start of the current year if no date is given.
     """
     if from_date is None:
-        from_date = f"{datetime.utcnow().year}-01-01"
+        from_date = f"{datetime.now(timezone.utc).year}-01-01"
 
-    to_date = datetime.utcnow().strftime("%Y-%m-%d")
+    to_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     logger.info("Scanning for Hansards from %s to %s", from_date, to_date)
 

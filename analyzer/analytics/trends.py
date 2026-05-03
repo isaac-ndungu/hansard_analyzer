@@ -166,7 +166,80 @@ def get_all_sessions_list(db_path: Path = DB_PATH) -> list[dict]:
         conn.close()
 
 
-# Recent Sessions
+def get_sessions_filtered(
+    month: str | None = None,
+    db_path: Path = DB_PATH,
+) -> list[dict]:
+    """
+    Returns sessions filtered to a specific YYYY-MM month string.
+    When month is None, behaves identically to get_all_sessions_list.
+    Each dict contains: {id, date, chamber, volume, issue, session_time, speech_count}.
+    """
+    conn = get_connection(db_path)
+    try:
+        cursor = conn.cursor()
+        if month:
+            cursor.execute(
+                """
+                SELECT
+                    se.id,
+                    se.date,
+                    se.chamber,
+                    se.volume,
+                    se.issue,
+                    se.session_time,
+                    COUNT(sp.id) AS speech_count
+                FROM sessions se
+                LEFT JOIN speeches sp ON sp.session_id = se.id
+                WHERE strftime('%Y-%m', se.date) = ?
+                GROUP BY se.id
+                ORDER BY se.date DESC
+                """,
+                (month,),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT
+                    se.id,
+                    se.date,
+                    se.chamber,
+                    se.volume,
+                    se.issue,
+                    se.session_time,
+                    COUNT(sp.id) AS speech_count
+                FROM sessions se
+                LEFT JOIN speeches sp ON sp.session_id = se.id
+                GROUP BY se.id
+                ORDER BY se.date DESC
+                """
+            )
+        columns = [d[0] for d in cursor.description]
+        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+def get_session_year_months(db_path: Path = DB_PATH) -> list[str]:
+    """
+    Returns a sorted list of distinct YYYY-MM strings present in the sessions table.
+    Used to build the year/month navigation pills on the sessions list page.
+    """
+    conn = get_connection(db_path)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT DISTINCT strftime('%Y-%m', date) AS ym
+            FROM sessions
+            ORDER BY ym DESC
+            """
+        )
+        return [row[0] for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
 
 def get_recent_sessions(limit: int = 5, db_path: Path = DB_PATH) -> list[dict]:
     """

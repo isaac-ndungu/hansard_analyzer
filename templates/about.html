@@ -1,12 +1,18 @@
 {% extends "base.html" %}
 
 {% block title %}About — Hansard Analyzer{% endblock %}
+{% block full_width %}
+
+<div class="w-full h-[33vh] overflow-hidden">
+    <img src="/static/images/about_hero.png" alt="Hansard Analyzer" class="w-full h-full object-cover">
+</div>
+
+{% endblock %}
 
 {% block content %}
 
 <!-- Header -->
-<div class="mb-12 mt-[-600px] text-center"> ">
-    <img src="/static/images/about_hero.png" alt="Hansard Analyzer Logo" class="w-full mb-4">
+<div class="mb-12 text-center">
     <h1 class="font-sans text-5xl font-black mb-8 tracking-wide">About Hansard Analyzer</h1>
     <div class="mx-auto h-1 w-40 bg-green-500 max-w-2xl mb-8"> </div>
     <p class="text-lg font-semibold max-w-2xl mx-auto tracking-wide">

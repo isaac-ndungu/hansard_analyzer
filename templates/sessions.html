@@ -1,47 +1,188 @@
 {% extends "base.html" %}
-
 {% block title %}Parliamentary Sessions — Hansard Analyzer{% endblock %}
+
+{% block full_width %}
+
+<div class="w-full h-[33vh] overflow-hidden">
+    <img src="/static/images/about_hero.png" alt="Hansard Analyzer" class="w-full h-full object-cover">
+</div>
+
+{% endblock %}
 
 {% block content %}
 
 <!-- Header -->
 <div class="mb-8">
-    <h1 class="font-serif text-3xl sm:text-4xl font-semibold text-gray-900 mb-2">Parliamentary Sessions</h1>
-    <p class="text-gray-500 text-lg">{{ sessions|length }} sitting{{ 's' if sessions|length != 1 else '' }} recorded</p>
+    <h1 class="font-serif text-4xl sm:text-5xl font-black text-gray-900 tracking-wide mb-2">
+        Parliamentary Sessions
+    </h1>
+    <div class="h-1 w-20 bg-green-500 mb-4"></div>
+    <p class="text-gray-500 text-lg font-semibold tracking-wide">
+        {% if active_month %}
+            Showing sessions for <span class="text-green-700">{{ active_month }}</span>
+            &nbsp;·&nbsp;
+            <a href="{{ url_for('sessions.session_list') }}" class="text-sm text-green-600 underline hover:text-green-800 transition-colors">
+                Clear filter
+            </a>
+        {% else %}
+            {{ pagination.total }} sitting{{ 's' if pagination.total != 1 else '' }} recorded
+        {% endif %}
+    </p>
+</div>
+
+<!-- Date Navigation Bar -->
+<div class="mb-8 bg-white border border-gray-200 rounded-xl p-5">
+    <div class="flex flex-col sm:flex-row sm:items-end gap-5">
+
+        <!-- Month picker -->
+        <div class="flex-1">
+            <label for="month-picker" class="block text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
+                Jump to month
+            </label>
+            <form id="month-form" action="{{ url_for('sessions.session_list') }}" method="get" class="flex gap-2">
+                <input
+                    id="month-picker"
+                    type="month"
+                    name="month"
+                    value="{{ active_month }}"
+                    class="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 text-sm text-gray-800
+                           focus:ring-2 focus:ring-green-100 focus:border-green-500 outline-none
+                           transition-all cursor-pointer"
+                    onchange="this.form.submit()"
+                />
+                {% if active_month %}
+                <a href="{{ url_for('sessions.session_list') }}"
+                   class="px-3 py-2.5 rounded-lg border border-gray-200 text-gray-500 text-sm
+                          hover:border-red-300 hover:text-red-500 transition-colors"
+                   title="Clear filter">
+                    ✕
+                </a>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Year pills (derived from distinct years in year_months) -->
+        {% if year_months %}
+        <div class="flex-shrink-0">
+            <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">Quick year jump</p>
+            <div class="flex flex-wrap gap-2">
+                {% set seen_years = [] %}
+                {% for ym in year_months %}
+                    {% set yr = ym[:4] %}
+                    {% if yr not in seen_years %}
+                        {% set _ = seen_years.append(yr) %}
+                        {# ym is the most-recent month in this year (list is DESC) #}
+                        <a href="{{ url_for('sessions.session_list', month=ym) }}"
+                           class="px-3 py-1.5 rounded-lg text-sm font-medium border transition-all
+                                  {% if active_month and active_month[:4] == yr %}
+                                      bg-green-600 text-white border-green-600
+                                  {% else %}
+                                      bg-white text-gray-700 border-gray-200 hover:border-green-400 hover:text-green-700
+                                  {% endif %}">
+                            {{ yr }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- Month pills (for active year, show individual months) -->
+    {% if active_month and year_months %}
+    {% set active_year = active_month[:4] %}
+    {% set months_in_year = [] %}
+    {% for ym in year_months %}
+        {% if ym[:4] == active_year %}
+            {% set _ = months_in_year.append(ym) %}
+        {% endif %}
+    {% endfor %}
+
+    {% if months_in_year|length > 1 %}
+    <div class="mt-4 pt-4 border-t border-gray-100">
+        <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">Months in {{ active_year }}</p>
+        <div class="flex flex-wrap gap-2">
+            {% set month_names = {
+                '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr',
+                '05': 'May', '06': 'Jun', '07': 'Jul', '08': 'Aug',
+                '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec'
+            } %}
+            {% for ym in months_in_year|sort %}
+                {% set mm = ym[5:7] %}
+                <a href="{{ url_for('sessions.session_list', month=ym) }}"
+                   class="px-3 py-1.5 rounded-lg text-sm font-medium border transition-all
+                          {% if active_month == ym %}
+                              bg-green-600 text-white border-green-600
+                          {% else %}
+                              bg-white text-gray-600 border-gray-200 hover:border-green-400 hover:text-green-700
+                          {% endif %}">
+                    {{ month_names.get(mm, mm) }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
 </div>
 
 {% if sessions %}
 <div class="space-y-3">
     {% for session in sessions %}
     <a href="{{ url_for('sessions.session_detail', session_id=session.id) }}"
-       class="group flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white hover:border-green-400 hover:shadow-md hover:bg-green-50 transition-all duration-200">
+       class="group flex items-center justify-between p-5 border border-gray-200
+              rounded-xl bg-white hover:border-green-400 hover:shadow-lg
+              hover:-translate-y-0.5 transition-all duration-200">
+
         <div class="flex-1 min-w-0">
             <div class="flex items-baseline gap-3 flex-wrap">
-                <div class="font-serif font-semibold text-gray-900 text-lg group-hover:text-green-600 transition-colors">{{ session.date }}</div>
-                <span class="text-xs text-gray-500 font-medium">{{ session.chamber }}</span>
+                <div class="font-serif font-bold text-gray-900 text-xl
+                            group-hover:text-green-700 transition-colors">
+                    {{ session.date }}
+                </div>
+                <span class="text-xs text-gray-500 font-medium tracking-wide">
+                    {{ session.chamber }}
+                </span>
             </div>
-            <div class="mt-1 flex items-center gap-4 text-sm text-gray-600 flex-wrap">
+            <div class="mt-1 flex items-center gap-4 text-sm text-gray-500 flex-wrap">
                 {% if session.volume %}
                     <span>Vol. {{ session.volume }}</span>
                 {% endif %}
                 {% if session.issue %}
                     <span>No. {{ session.issue }}</span>
                 {% endif %}
-                <span class="text-gray-400">•</span>
-                <span class="text-green-600 font-medium">{{ session.speech_count }} speech{{ 'es' if session.speech_count != 1 else '' }}</span>
+                <span class="text-gray-300">·</span>
+                <span class="text-green-600 font-semibold">
+                    {{ session.speech_count }} speech{{ 'es' if session.speech_count != 1 else '' }}
+                </span>
             </div>
         </div>
-        <div class="flex-shrink-0 text-gray-300 group-hover:text-green-500 transition-colors ml-4 text-lg font-light">→</div>
+
+        <div class="shrink-0 text-gray-300 group-hover:text-green-500 transition-colors ml-4 text-xl">
+            →
+        </div>
     </a>
     {% endfor %}
 </div>
 
 {% set p = pagination %}
-{% set extra_params = '' %}
+{% set extra_params = '&month=' + active_month if active_month else '' %}
 {% include 'pagination.html' %}
+
 {% else %}
-<div class="border border-gray-200 rounded-xl p-8 bg-gray-50 text-center">
-    <p class="text-gray-600 text-sm">No sessions in the database yet. Run <code class="bg-gray-200 px-2 py-1 rounded text-xs">flask sync</code> to ingest Hansard data.</p>
+<div class="border border-gray-200 rounded-2xl p-10 bg-gray-50 text-center">
+    {% if active_month %}
+    <p class="text-gray-600 mb-3">No sessions found for <strong>{{ active_month }}</strong>.</p>
+    <a href="{{ url_for('sessions.session_list') }}" class="text-green-600 underline text-sm hover:text-green-800">
+        View all sessions
+    </a>
+    {% else %}
+    <p class="text-gray-600">
+        No sessions in the database yet. Run
+        <code class="bg-gray-200 px-2 py-1 rounded text-xs">python main.py sync</code>
+        to ingest Hansard data.
+    </p>
+    {% endif %}
 </div>
 {% endif %}
 

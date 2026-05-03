@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,87 +10,392 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+        rel="stylesheet" />
 
+    <style>
+        body {
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Spectral', serif;
+        }
+
+        /* Omnibox dropdown animation */
+        #search-dropdown {
+            transform-origin: top center;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+        #search-dropdown.hidden {
+            opacity: 0;
+            transform: scaleY(0.95);
+            pointer-events: none;
+        }
+        #search-dropdown:not(.hidden) {
+            opacity: 1;
+            transform: scaleY(1);
+        }
+    </style>
 </head>
 
-<body class=" text-stone-900 min-h-screen flex flex-col">
+<body class="text-stone-900 min-h-screen flex flex-col">
 
-<!-- Navbar -->
-<nav class="bg-green-800 border-b border-gray-700 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-14">
+    <!-- Navbar -->
+    <nav class="bg-green-800 border-b border-green-900 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 gap-4">
 
-            <!-- Brand -->
-            <a href="{{ url_for('home.index') }}"
-               class="text-white font-sans font-bold text-lg tracking-tight flex items-center gap-2 hover:text-green-400 transition-colors tracking-widest">
-                Hansard Analyzer
-            </a>
+                <a href="{{ url_for('home.index') }}" class="text-white font-sans font-bold text-lg tracking-widest
+                      flex items-center gap-2 hover:text-green-300 transition-colors shrink-0">
+                    Hansard Analyzer
+                </a>
 
-            <!-- Nav links -->
-            <div class="hidden sm:flex items-center gap-6 text-sm text-gray-300">
-                <a href="{{ url_for('members.member_list') }}"
-                   class="hover:text-white transition-colors">MPs</a>
-                <a href="{{ url_for('sessions.session_list') }}"
-                   class="hover:text-white transition-colors">Sessions</a>
-                <a href="{{ url_for('topics.topics_overview') }}"
-                   class="hover:text-white transition-colors">Topics</a>
-                <a href="{{ url_for('search.search') }}"
-                   class="hover:text-white transition-colors">Search</a>
-                <a href="{{ url_for('home.about') }}"
-                   class="hover:text-white transition-colors">About</a>
-                <span class="bg-green-800 text-green-100 text-xs font-medium px-2 py-0.5 rounded-full">
-                    Kenya National Assembly 
-                </span>
+                <!-- navlinks + omnibox — Desktop -->
+                <div class="hidden sm:flex items-center gap-5 text-sm text-gray-300 flex-1 justify-end">
+
+                    <a href="{{ url_for('home.index') }}"
+                        class="hover:text-white transition-colors whitespace-nowrap
+                                        {{ 'border-b-2 border-white' if request.path == url_for('home.index') else '' }}">
+                        Home
+                    </a>
+                    <a href="{{ url_for('members.member_list') }}"
+                        class="hover:text-white transition-colors whitespace-nowrap
+                                        {{ 'border-b-2 border-white' if request.path == url_for('members.member_list') else '' }}">
+                        MPs
+                    </a>
+                    <a href="{{ url_for('sessions.session_list') }}"
+                        class="hover:text-white transition-colors whitespace-nowrap
+                                        {{ 'border-b-2 border-white' if request.path == url_for('sessions.session_list') else '' }}">
+                        Sessions
+                    </a>
+                    <a href="{{ url_for('topics.topics_overview') }}"
+                        class="hover:text-white transition-colors whitespace-nowrap
+                                            {{ 'border-b-2 border-white' if request.path == url_for('topics.topics_overview') else '' }}">
+                        Topics
+                    </a>
+                    <a href="{{ url_for('home.about') }}"
+                        class="hover:text-white transition-colors whitespace-nowrap
+                                        {{ 'border-b-2 border-white' if request.path == url_for('home.about') else '' }}">
+                        About
+                    </a>
+
+                    <!-- Omnibox -->
+                    <div id="omnibox" class="relative w-64">
+                        <form id="omnibox-form" action="{{ url_for('search.search') }}" method="get" autocomplete="off">
+                            <div class="relative flex items-center">
+                                <svg class="absolute left-3 w-4 h-4 text-green-300 pointer-events-none" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                                </svg>
+                                <input
+                                    id="omnibox-input"
+                                    type="text"
+                                    name="q"
+                                    placeholder="Search MPs, sessions, topics…"
+                                    class="w-full pl-9 pr-3 py-2 rounded-lg bg-green-700 border border-green-600
+                                           text-white placeholder-green-300 text-sm
+                                           focus:outline-none focus:ring-2 focus:ring-green-400 focus:bg-green-600
+                                           transition-all"
+                                />
+                            </div>
+                        </form>
+
+                        <!-- Dropdown results -->
+                        <div id="search-dropdown"
+                            class="hidden absolute top-full mt-2 left-0 right-0 bg-white rounded-xl shadow-2xl
+                                   border border-gray-100 overflow-hidden z-50 min-w-[360px]">
+
+                            <div id="dropdown-inner" class="max-h-[480px] overflow-y-auto">
+                                <!-- filled by JS -->
+                            </div>
+
+                            <!-- Footer: full results link -->
+                            <div id="dropdown-footer" class="hidden border-t border-gray-100 px-4 py-2.5 bg-gray-50">
+                                <a id="see-all-link" href="{{ url_for('search.search') }}"
+                                    class="text-sm text-green-700 font-medium hover:text-green-900 transition-colors flex items-center gap-1">
+                                    See all results
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- / Omnibox -->
+
+                    <span class="bg-green-700 text-green-100 text-xs font-medium px-3 py-1 rounded-full whitespace-nowrap">
+                        Kenya National Assembly
+                    </span>
+                </div>
+
+                <button class="sm:hidden text-gray-300 hover:text-white"
+                    onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
             </div>
 
-            <!-- Mobile menu button -->
-            <button
-                class="sm:hidden text-gray-300 hover:text-white"
-                onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"
-            >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-            </button>
+            <!-- Mobile menu -->
+            <div id="mobile-menu" class="hidden sm:hidden pb-3 text-sm text-gray-300 space-y-2">
+                <a href="{{ url_for('home.index') }}"
+                    class="block hover:text-white py-1
+                            {{ 'border-b-2 border-white inline-block' if request.path == url_for('home.index') else '' }}">
+                    Home
+                </a>
+                <a href="{{ url_for('members.member_list') }}"
+                    class="block hover:text-white py-1
+                            {{ 'border-b-2 border-white inline-block' if request.path == url_for('members.member_list') else '' }}">
+                    MPs
+                </a>
+                <a href="{{ url_for('sessions.session_list') }}"
+                    class="block hover:text-white py-1
+                            {{ 'border-b-2 border-white inline-block' if request.path == url_for('sessions.session_list') else '' }}">
+                    Sessions
+                </a>
+                <a href="{{ url_for('topics.topics_overview') }}"
+                    class="block hover:text-white py-1
+                                {{ 'border-b-2 border-white inline-block' if request.path == url_for('topics.topics_overview') else '' }}">
+                    Topics
+                </a>
+                <a href="{{ url_for('home.about') }}"
+                    class="block hover:text-white py-1
+                            {{ 'border-b-2 border-white inline-block' if request.path == url_for('home.about') else '' }}">
+                    About
+                </a>
+
+                <!-- Mobile search row -->
+                <form action="{{ url_for('search.search') }}" method="get" class="pt-1" autocomplete="off">
+                    <div class="relative flex items-center">
+                        <svg class="absolute left-3 w-4 h-4 text-green-400 pointer-events-none" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                        </svg>
+                        <input type="text" name="q" placeholder="Search…"
+                            class="w-full pl-9 pr-3 py-2 rounded-lg bg-green-700 border border-green-600
+                                   text-white placeholder-green-300 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+                    </div>
+                </form>
+            </div>
         </div>
+    </nav>
 
-        <!-- Mobile nav -->
-        <div id="mobile-menu" class="hidden sm:hidden pb-3 text-sm text-gray-300 space-y-2">
-            <a href="{{ url_for('members.member_list') }}" class="block hover:text-white py-1">MPs</a>
-            <a href="{{ url_for('sessions.session_list') }}" class="block hover:text-white py-1">Sessions</a>
-            <a href="{{ url_for('topics.topics_overview') }}" class="block hover:text-white py-1">Topics</a>
-            <a href="{{ url_for('search.search') }}" class="block hover:text-white py-1">Search</a>
-            <a href="{{ url_for('home.about') }}" class="block hover:text-white py-1">About</a>
+    <!-- Full width block — used by homepage for the hero -->
+    {% block full_width %}{% endblock %}
+
+    <!-- Standard constrained content -->
+    <main class="flex-1">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {% block content %}{% endblock %}
         </div>
-    </div>
-</nav>
+    </main>
 
-<!-- Page content -->
-<main class="flex-1">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {% block content %}{% endblock %}
-    </div>
-</main>
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 mt-12 py-8 text-center text-sm text-gray-400">
+        <div class="max-w-7xl mx-auto px-4">
+            <p class="font-semibold text-gray-600 mb-1">Hansard Analyzer</p>
+            <p class="mb-3">
+                Data sourced from
+                <a href="https://parliament.go.ke" target="_blank"
+                    class="underline hover:text-gray-600 transition-colors">parliament.go.ke</a>
+                &nbsp;·&nbsp; Open source civic technology
+            </p>
+            <div class="flex justify-center gap-6 text-xs">
+                <a href="{{ url_for('search.search') }}" class="hover:text-gray-600 transition-colors">Search</a>
+                <a href="{{ url_for('members.member_list') }}" class="hover:text-gray-600 transition-colors">MPs</a>
+                <a href="{{ url_for('sessions.session_list') }}"
+                    class="hover:text-gray-600 transition-colors">Sessions</a>
+                <a href="{{ url_for('home.about') }}" class="hover:text-gray-600 transition-colors">About</a>
+            </div>
+        </div>
+    </footer>
 
-<!-- Footer -->
-<footer class="border-t border-gray-200 mt-12 py-6 text-center text-sm text-gray-400">
-    <div class="max-w-7xl mx-auto px-4">
-        Data sourced from
-        <a href="https://parliament.go.ke" target="_blank"
-           class="underline hover:text-gray-600 transition-colors">parliament.go.ke</a>
-        &nbsp;&middot;&nbsp;
-        Open source civic technology
-        &nbsp;&middot;&nbsp;
-        <a href="{{ url_for('search.search') }}"
-           class="underline hover:text-gray-600 transition-colors">Search the Hansard</a>
-    </div>
-</footer>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <!-- =====================================================
+         Omnibox Live Search
+         ===================================================== -->
+    <script>
+    (function () {
+        const input      = document.getElementById('omnibox-input');
+        const dropdown   = document.getElementById('search-dropdown');
+        const inner      = document.getElementById('dropdown-inner');
+        const footer     = document.getElementById('dropdown-footer');
+        const seeAllLink = document.getElementById('see-all-link');
+        const form       = document.getElementById('omnibox-form');
 
-{% block scripts %}{% endblock %}
+        if (!input) return; // guard for pages that might not have the omnibox
+
+        let debounceTimer = null;
+
+        // ── Type handler ─────────────────────────────────────────────────────
+        input.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            const q = input.value.trim();
+
+            if (q.length < 2) {
+                closeDropdown();
+                return;
+            }
+
+            debounceTimer = setTimeout(() => fetchResults(q), 250);
+        });
+
+        // ── Keyboard: Enter → full search page ───────────────────────────────
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') { closeDropdown(); input.blur(); }
+        });
+
+        // ── Click outside → close ─────────────────────────────────────────────
+        document.addEventListener('click', function (e) {
+            if (!document.getElementById('omnibox').contains(e.target)) {
+                closeDropdown();
+            }
+        });
+
+        // ── Fetch ─────────────────────────────────────────────────────────────
+        function fetchResults(q) {
+            fetch(`/search/quick?q=${encodeURIComponent(q)}`)
+                .then(r => r.json())
+                .then(data => renderDropdown(q, data))
+                .catch(() => closeDropdown());
+        }
+
+        // ── Render ────────────────────────────────────────────────────────────
+        function renderDropdown(q, data) {
+            const hasAgenda   = data.agenda   && data.agenda.length   > 0;
+            const hasMPs      = data.mps      && data.mps.length      > 0;
+            const hasSessions = data.sessions && data.sessions.length > 0;
+
+            if (!hasAgenda && !hasMPs && !hasSessions) {
+                inner.innerHTML = `
+                    <div class="px-4 py-6 text-center text-sm text-gray-400">
+                        No results for <strong class="text-gray-600">"${escHtml(q)}"</strong>
+                    </div>`;
+                footer.classList.add('hidden');
+                openDropdown();
+                return;
+            }
+
+            let html = '';
+
+            // MPs
+            if (hasMPs) {
+                html += groupHeader('Members of Parliament');
+                data.mps.forEach(mp => {
+                    html += `
+                    <a href="/members/${mp.id}"
+                       class="flex items-center gap-3 px-4 py-3 hover:bg-green-50 transition-colors group">
+                        <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm font-semibold text-gray-900 group-hover:text-green-700 truncate">
+                                ${escHtml(mp.name)}
+                            </div>
+                            <div class="text-xs text-gray-400 truncate">
+                                ${escHtml(mp.constituency || '')}
+                                ${mp.party ? `<span class="mx-1">·</span><span class="text-slate-500">${escHtml(mp.party)}</span>` : ''}
+                            </div>
+                        </div>
+                    </a>`;
+                });
+            }
+
+            // Sessions
+            if (hasSessions) {
+                html += groupHeader('Sessions');
+                data.sessions.forEach(s => {
+                    html += `
+                    <a href="/sessions/${s.id}"
+                       class="flex items-center gap-3 px-4 py-3 hover:bg-green-50 transition-colors group">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm font-semibold text-gray-900 group-hover:text-green-700">
+                                ${escHtml(s.date)}
+                            </div>
+                            <div class="text-xs text-gray-400">
+                                ${escHtml(s.chamber)}
+                                <span class="mx-1">·</span>
+                                <span class="text-green-600">${s.speech_count} speech${s.speech_count !== 1 ? 'es' : ''}</span>
+                            </div>
+                        </div>
+                    </a>`;
+                });
+            }
+
+            // Agenda items
+            if (hasAgenda) {
+                html += groupHeader('Agenda Items');
+                data.agenda.forEach(item => {
+                    html += `
+                    <a href="/agenda/${item.id}"
+                       class="flex items-start gap-3 px-4 py-3 hover:bg-green-50 transition-colors group">
+                        <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm font-semibold text-gray-900 group-hover:text-green-700 line-clamp-2 leading-snug">
+                                ${escHtml(item.title)}
+                            </div>
+                            <div class="text-xs text-gray-400 mt-0.5">
+                                <span class="inline-block bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-medium mr-1">${escHtml(item.type)}</span>
+                                ${escHtml(item.date)}
+                            </div>
+                        </div>
+                    </a>`;
+                });
+            }
+
+            inner.innerHTML = html;
+
+            // Update "See all" link
+            seeAllLink.href = `/search?q=${encodeURIComponent(q)}`;
+            footer.classList.remove('hidden');
+
+            openDropdown();
+        }
+
+        function groupHeader(label) {
+            return `<div class="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400 border-b border-gray-50">${label}</div>`;
+        }
+
+        function openDropdown()  { dropdown.classList.remove('hidden'); }
+        function closeDropdown() { dropdown.classList.add('hidden'); inner.innerHTML = ''; footer.classList.add('hidden'); }
+
+        function escHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    })();
+    </script>
+
+    {% block scripts %}{% endblock %}
 </body>
+
 </html>

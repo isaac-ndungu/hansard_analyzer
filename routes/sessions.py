@@ -1,7 +1,11 @@
 from flask import Blueprint, render_template, abort, request
 from collections import defaultdict
 from analyzer.database.seed import get_connection
-from analyzer.analytics.trends import get_all_sessions_list
+from analyzer.analytics.trends import (
+    get_all_sessions_list,
+    get_sessions_filtered,
+    get_session_year_months,
+)
 from analyzer.utils.pagination import paginate
 from flask import jsonify
 from analyzer.ai.cache import get_cached_summary, save_summary
@@ -13,16 +17,23 @@ from analyzer.database.queries import get_agenda_items_by_session
 sessions_bp = Blueprint("sessions", __name__)
 
 
-sessions_bp = Blueprint("sessions", __name__)
-
 @sessions_bp.route("/")
 def session_list():
     page     = request.args.get("page", 1, type=int)
+    month    = request.args.get("month", "").strip() or None
     per_page = 20
 
-    sessions = get_all_sessions_list()
+    sessions = get_sessions_filtered(month=month)
+    year_months = get_session_year_months()
+
     p = paginate(sessions, page, per_page)
-    return render_template("sessions.html", sessions=p["items"], pagination=p)
+    return render_template(
+        "sessions.html",
+        sessions=p["items"],
+        pagination=p,
+        active_month=month or "",
+        year_months=year_months,
+    )
 
 @sessions_bp.route("/<int:session_id>")
 def session_detail(session_id):

@@ -12,6 +12,7 @@ from analyzer.pipeline.parser import parse_document
 from analyzer.pipeline.normalizer import normalize
 from analyzer.pipeline.pipeline import run_pipeline
 from config import PDF_DIR
+from datetime import datetime, timezone
 
 console = Console()
 
@@ -67,8 +68,8 @@ def cmd_sync(from_date, dry_run):
     """
     if dry_run:
         from datetime import datetime
-        start = from_date or f"{datetime.utcnow().year}-01-01"
-        end = datetime.utcnow().strftime("%Y-%m-%d")
+        start = from_date or f"{datetime.now(timezone.utc).year}-01-01"
+        end = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         console.print(Panel(f"Dry run — scanning {start} to {end}", title="sync --dry-run"))
 
         available = get_available_hansards(start, end)

@@ -1,97 +1,102 @@
 {% extends "base.html" %}
-
 {% block title %}{{ profile.name }} — Hansard Analyzer{% endblock %}
 
 {% block content %}
 
 <!-- Breadcrumb -->
-<div class="mb-6 flex items-center gap-2 text-sm">
-    <a href="{{ url_for('members.member_list') }}" class="text-gray-600 hover:text-green-600 transition-colors">MPs</a>
-    <span class="text-gray-400">•</span>
-    <span class="text-gray-900 font-medium">{{ profile.name }}</span>
+<div class="flex items-center gap-2 text-sm text-gray-400 mb-8">
+    <a href="{{ url_for('members.member_list') }}" class="hover:text-green-600 transition-colors">MPs</a>
+    <span>·</span>
+    <span class="text-gray-700 font-medium">{{ profile.name }}</span>
 </div>
 
-<!-- Header with sentiment badge -->
-<div class="mb-8">
+<!-- Header -->
+<div class="mb-10">
     <div class="flex items-start gap-4 flex-wrap mb-3">
-        <h1 class="font-serif text-3xl sm:text-4xl font-semibold text-gray-900">{{ profile.name }}</h1>
+        <h1 class="font-serif text-4xl sm:text-5xl font-black text-gray-900 tracking-wide">
+            {{ profile.name }}
+        </h1>
         {% if sentiment.label == 'Constructive' %}
-            <span class="inline-block px-3 py-1 bg-green-100 border border-green-300 text-green-700 text-sm font-semibold rounded-full">{{ sentiment.label }}</span>
+            <span class="inline-block px-3 py-1 bg-green-100 border border-green-300 text-green-700 text-sm font-semibold rounded-full mt-2">
+                {{ sentiment.label }}
+            </span>
         {% elif sentiment.label == 'Heated' %}
-            <span class="inline-block px-3 py-1 bg-red-100 border border-red-300 text-red-700 text-sm font-semibold rounded-full">{{ sentiment.label }}</span>
+            <span class="inline-block px-3 py-1 bg-red-100 border border-red-300 text-red-700 text-sm font-semibold rounded-full mt-2">
+                {{ sentiment.label }}
+            </span>
         {% else %}
-            <span class="inline-block px-3 py-1 bg-gray-100 border border-gray-300 text-gray-700 text-sm font-semibold rounded-full">{{ sentiment.label }}</span>
+            <span class="inline-block px-3 py-1 bg-gray-100 border border-gray-300 text-gray-600 text-sm font-semibold rounded-full mt-2">
+                {{ sentiment.label }}
+            </span>
         {% endif %}
     </div>
+    <div class="h-1 w-20 bg-green-500 mb-4"></div>
     <p class="text-gray-600 text-base">
         {{ profile.constituency or '—' }}
-        <span class="mx-2 text-gray-400">•</span>
-        <span class="inline-block px-2.5 py-1 bg-gray-100 text-gray-700 rounded text-sm font-medium">{{ profile.party or '—' }}</span>
+        <span class="mx-2 text-gray-300">·</span>
+        <span class="inline-block px-2.5 py-1 bg-gray-100 text-gray-700 rounded text-sm font-medium">
+            {{ profile.party or '—' }}
+        </span>
     </p>
 </div>
 
-<!-- Stats Grid -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-    <div class="border border-gray-200 rounded-lg p-5 bg-white">
-        <div class="text-3xl font-semibold text-green-600 font-serif">{{ profile.speech_count }}</div>
-        <div class="text-sm text-gray-600 mt-1">Total Speeches</div>
+<!-- Stats -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+    <div class="border border-gray-200 rounded-xl p-5 bg-white hover:shadow-md transition-shadow">
+        <div class="font-serif text-3xl font-semibold text-green-600 mb-1">{{ profile.speech_count }}</div>
+        <div class="text-sm text-gray-500">Total Speeches</div>
     </div>
-    <div class="border border-gray-200 rounded-lg p-5 bg-white">
-        <div class="text-3xl font-semibold text-green-600 font-serif">{{ "{:,}".format(profile.word_count) }}</div>
-        <div class="text-sm text-gray-600 mt-1">Words Spoken</div>
+    <div class="border border-gray-200 rounded-xl p-5 bg-white hover:shadow-md transition-shadow">
+        <div class="font-serif text-3xl font-semibold text-green-600 mb-1">{{ "{:,}".format(profile.word_count) }}</div>
+        <div class="text-sm text-gray-500">Words Spoken</div>
     </div>
-    <div class="border border-gray-200 rounded-lg p-5 bg-white">
-        <div class="text-3xl font-semibold text-green-600 font-serif">{{ profile.sessions_attended }}</div>
-        <div class="text-sm text-gray-600 mt-1">Sessions</div>
+    <div class="border border-gray-200 rounded-xl p-5 bg-white hover:shadow-md transition-shadow">
+        <div class="font-serif text-3xl font-semibold text-green-600 mb-1">{{ profile.sessions_attended }}</div>
+        <div class="text-sm text-gray-500">Sessions Attended</div>
     </div>
-    <div class="border border-gray-200 rounded-lg p-5 bg-white">
-        <div class="text-3xl font-semibold text-green-600 font-serif">{{ profile.avg_speech_length }}</div>
-        <div class="text-sm text-gray-600 mt-1">Avg Length</div>
+    <div class="border border-gray-200 rounded-xl p-5 bg-white hover:shadow-md transition-shadow">
+        <div class="font-serif text-3xl font-semibold text-green-600 mb-1">{{ profile.avg_speech_length }}</div>
+        <div class="text-sm text-gray-500">Avg Speech Length</div>
     </div>
 </div>
 
-<!-- AI Summary block -->
-<div class="border border-gray-200 rounded-xl p-5 mb-8 bg-white" id="ai-block">
+<!-- AI Summary -->
+<div class="border border-gray-200 rounded-2xl p-6 mb-10 bg-white hover:shadow-md transition-shadow">
     <div class="flex items-center justify-between mb-2">
-        <h3 class="font-serif text-sm font-semibold text-gray-700">AI MP Summary</h3>
-        <span class="text-xs text-gray-400">Powered by Gemini</span>
+        <h3 class="font-serif text-xl font-semibold text-gray-800">AI MP Summary</h3>
+        <span class="text-xs text-gray-400 tracking-wide">Powered by Gemini · Cached 7 days</span>
     </div>
-    <div id="ai-summary-text" class="text-sm text-gray-500 leading-relaxed">
-        Click the button below to generate an AI summary of this MP's record.
+    <div class="h-0.5 w-12 bg-green-500 mb-4"></div>
+    <div id="ai-summary-text" class="text-sm text-gray-500 leading-relaxed italic">
+        Click below to generate a plain-language summary of this MP's parliamentary record.
     </div>
-    <button
-        id="ai-btn"
-        onclick="generateSummary('mp', {{ profile.id }})"
-        class="mt-3 text-xs font-medium text-green-600 hover:text-green-700 border border-green-200 hover:border-green-400 px-3 py-1.5 rounded-lg transition-colors"
-    >
+    <button id="ai-btn" onclick="generateSummary('mp', {{ profile.id }})"
+        class="mt-4 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100
+               border border-green-200 hover:border-green-400 px-4 py-2 rounded-lg transition-all">
         Generate Summary
     </button>
 </div>
 
-<!-- Main content grid -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-    <!-- Participation Chart -->
-    <div class="lg:col-span-2">
-        <div class="border border-gray-200 rounded-lg p-6 bg-white">
-            <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Monthly Participation</h3>
-            {% if chart_labels %}
-                <canvas id="participationChart" height="80"></canvas>
-            {% else %}
-                <p class="text-gray-600 text-sm text-center py-8">Not enough data to display participation trends.</p>
-            {% endif %}
-        </div>
+<!-- Chart + Sidebar -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+    <div class="lg:col-span-2 border border-gray-200 rounded-2xl p-6 bg-white hover:shadow-md transition-shadow">
+        <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Monthly Participation</h3>
+        {% if chart_labels %}
+            <canvas id="participationChart" height="80"></canvas>
+        {% else %}
+            <p class="text-sm text-gray-400 text-center py-8">Not enough data to display participation trends.</p>
+        {% endif %}
     </div>
 
-    <!-- Sidebar Stats -->
-    <div class="space-y-6">
+    <div class="space-y-4">
         {% if profile.active_sections %}
-        <div class="border border-gray-200 rounded-lg p-6 bg-white">
-            <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Active In</h3>
+        <div class="border border-gray-200 rounded-2xl p-6 bg-white hover:shadow-md transition-shadow">
+            <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Most Active In</h3>
             <div class="space-y-2">
                 {% for section in profile.active_sections %}
                 <div class="flex justify-between items-center text-sm">
                     <span class="text-gray-700 capitalize">{{ section.section.lower() }}</span>
-                    <span class="font-medium text-green-600">{{ section.count }}</span>
+                    <span class="font-semibold text-green-600">{{ section.count }}</span>
                 </div>
                 {% endfor %}
             </div>
@@ -99,14 +104,15 @@
         {% endif %}
 
         {% if topics %}
-        <div class="border border-gray-200 rounded-lg p-6 bg-white">
+        <div class="border border-gray-200 rounded-2xl p-6 bg-white hover:shadow-md transition-shadow">
             <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Top Topics</h3>
             <div class="flex flex-wrap gap-2">
                 {% for t in topics %}
                 <a href="{{ url_for('topics.topic_detail', topic_name=t.topic) }}"
-                   class="inline-block px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors capitalize">
-                    {{ t.topic }}
-                    <span class="text-blue-600 font-semibold ml-1">{{ t.count }}</span>
+                   class="inline-block px-3 py-1.5 bg-green-50 border border-green-200
+                          text-green-700 text-xs font-medium rounded-full
+                          hover:bg-green-100 transition-colors capitalize">
+                    {{ t.topic }} <span class="font-bold ml-1">{{ t.count }}</span>
                 </a>
                 {% endfor %}
             </div>
@@ -115,18 +121,59 @@
     </div>
 </div>
 
+<!-- Parliamentary Activity -->
+{% if agenda_items %}
+<div class="mb-10">
+    <h2 class="font-serif text-2xl font-bold text-gray-900 mb-2">Parliamentary Activity</h2>
+    <div class="h-1 w-16 bg-green-500 mb-6"></div>
+    <div class="space-y-3">
+        {% for item in agenda_items %}
+        <a href="{{ url_for('agenda_items.agenda_item_detail', agenda_item_id=item.agenda_item_id) }}"
+           class="group flex items-center justify-between p-4 border border-gray-200 rounded-xl
+                  bg-white hover:border-green-400 hover:shadow-md transition-all duration-200">
+            <div class="flex items-center gap-3 min-w-0">
+                <span class="shrink-0 text-xs px-2 py-0.5 rounded-full font-medium
+                    {% if item.type == 'BILL' %}bg-blue-100 text-blue-700
+                    {% elif item.type == 'MOTION' %}bg-purple-100 text-purple-700
+                    {% elif item.type == 'PETITION' %}bg-orange-100 text-orange-700
+                    {% elif item.type == 'STATEMENT' %}bg-gray-100 text-gray-600
+                    {% else %}bg-gray-100 text-gray-500{% endif %}">
+                    {{ item.type }}
+                </span>
+                <span class="text-sm font-medium text-gray-800 group-hover:text-green-700 transition-colors truncate">
+                    {{ item.title }}
+                </span>
+            </div>
+            <div class="text-right shrink-0 ml-4">
+                <div class="text-xs text-gray-400">{{ item.date }}</div>
+                <div class="text-xs text-gray-400">
+                    {{ item.speech_count }} speech{{ 'es' if item.speech_count != 1 else '' }}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <!-- Recent Speeches -->
 {% if profile.recent_speeches %}
 <div>
-    <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Recent Speeches</h3>
-    <div class="space-y-3">
+    <h2 class="font-serif text-2xl font-bold text-gray-900 mb-2">Recent Speeches</h2>
+    <div class="h-1 w-16 bg-green-500 mb-6"></div>
+    <div class="space-y-4">
         {% for speech in profile.recent_speeches %}
-        <div class="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-sm text-gray-600">{{ speech.date }}</span>
-                <span class="inline-block px-2.5 py-1 bg-purple-50 border border-purple-200 text-purple-700 text-xs font-medium rounded">{{ speech.agenda_item if speech.agenda_item else speech.section }}</span>
+        <div class="border border-gray-200 rounded-xl p-5 bg-white hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+                <span class="text-sm text-gray-500">{{ speech.date }}</span>
+                <span class="inline-block px-2.5 py-1 bg-purple-50 border border-purple-200
+                             text-purple-700 text-xs font-medium rounded-full">
+                    {{ speech.section or '—' }}
+                </span>
             </div>
-            <p class="text-gray-700 text-sm leading-relaxed">{{ speech.content[:250] }}{% if speech.content|length > 250 %}…{% endif %}</p>
+            <p class="text-gray-700 text-sm leading-relaxed">
+                {{ speech.content[:250] }}{% if speech.content|length > 250 %}…{% endif %}
+            </p>
         </div>
         {% endfor %}
     </div>
@@ -140,55 +187,45 @@
 async function generateSummary(entityType, entityId) {
     const btn = document.getElementById('ai-btn');
     const textEl = document.getElementById('ai-summary-text');
-
     btn.disabled = true;
     btn.textContent = 'Generating…';
+    textEl.classList.add('italic');
     textEl.textContent = 'Analyzing parliamentary records…';
-
     try {
         const response = await fetch(`/${entityType === 'mp' ? 'members' : 'sessions'}/${entityId}/summary`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({})
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({})
         });
         const data = await response.json();
         textEl.textContent = data.summary;
-        btn.textContent = data.cached ? 'Regenerate' : 'Regenerate';
+        textEl.classList.remove('italic');
+        btn.textContent = 'Regenerate';
         btn.disabled = false;
     } catch (err) {
         textEl.textContent = 'Failed to generate summary. Please try again.';
+        textEl.classList.remove('italic');
         btn.textContent = 'Try Again';
         btn.disabled = false;
     }
 }
 </script>
-
 {% if chart_labels %}
 <script>
-const ctx = document.getElementById("participationChart").getContext("2d");
-new Chart(ctx, {
+new Chart(document.getElementById("participationChart").getContext("2d"), {
     type: "line",
     data: {
         labels: {{ chart_labels | tojson }},
         datasets: [{
-            label: "Speeches",
             data: {{ chart_data | tojson }},
-            borderColor: "#22c55e",
-            backgroundColor: "rgba(34, 197, 94, 0.05)",
-            tension: 0.4,
-            fill: true,
-            pointRadius: 5,
-            pointBackgroundColor: "#16a34a",
-            pointBorderColor: "white",
-            pointBorderWidth: 2,
+            borderColor: "#16a34a",
+            backgroundColor: "rgba(22,163,74,0.07)",
+            tension: 0.4, fill: true, pointRadius: 5,
+            pointBackgroundColor: "#16a34a", pointBorderColor: "white", pointBorderWidth: 2,
         }]
     },
     options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: { legend: { display: false } },
+        responsive: true, plugins: { legend: { display: false } },
         scales: {
-            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: "rgba(0,0,0,0.05)" } },
+            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: "rgba(0,0,0,0.04)" } },
             x: { grid: { display: false } }
         }
     }

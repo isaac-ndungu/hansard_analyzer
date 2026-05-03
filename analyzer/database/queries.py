@@ -580,6 +580,7 @@ def search_agenda_items(
     from_date: Optional[str] = None,
     to_date: Optional[str] = None,
     item_type: Optional[str] = None,
+    limit: Optional[int] = None,
 ) -> list[dict]:
     """
     Searches agenda item titles for a keyword.
@@ -614,6 +615,8 @@ def search_agenda_items(
         query += " AND ai.type = ?"
         params.append(item_type)
     query += " GROUP BY ai.id ORDER BY se.date DESC"
+    if limit is not None:
+        query += f" LIMIT {int(limit)}"
     cursor.execute(query, params)
     columns = [d[0] for d in cursor.description]
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
@@ -646,6 +649,62 @@ def search_mp_participation(
         ORDER BY speech_count DESC
         """,
         (f"%{keyword}%",),
+    )
+    columns = [d[0] for d in cursor.description]
+    return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+
+def search_members_by_name(
+    conn: sqlite3.Connection,
+    keyword: str,
+    limit: int = 5,
+) -> list[dict]:
+    """
+    Returns members whose name contains the keyword (case-insensitive).
+    Used by the navbar quick-search endpoint.
+    Each dict: {id, name, constituency, party}
+    """
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id, name, constituency, party
+        FROM members
+        WHERE name LIKE ?
+        ORDER BY name ASC
+        LIMIT ?
+        """,
+        (f"%{keyword}%", limit),
+    )
+    columns = [d[0] for d in cursor.description]
+    return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+
+def search_sessions_by_date(
+    conn: sqlite3.Connection,
+    keyword: str,
+    limit: int = 4,
+) -> list[dict]:
+    """
+    Returns sessions whose date string contains the keyword.
+    Supports partial matches like '2026', '2026-03', '2026-03-11'.
+    Each dict: {id, date, chamber, speech_count}
+    """
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT
+            se.id,
+            se.date,
+            se.chamber,
+            COUNT(sp.id) AS speech_count
+        FROM sessions se
+        LEFT JOIN speeches sp ON sp.session_id = se.id
+        WHERE se.date LIKE ?
+        GROUP BY se.id
+        ORDER BY se.date DESC
+        LIMIT ?
+        """,
+        (f"%{keyword}%", limit),
     )
     columns = [d[0] for d in cursor.description]
     return [dict(zip(columns, row)) for row in cursor.fetchall()]

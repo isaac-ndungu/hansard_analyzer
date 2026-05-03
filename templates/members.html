@@ -1,58 +1,88 @@
 {% extends "base.html" %}
-
 {% block title %}Members of Parliament — Hansard Analyzer{% endblock %}
+
+{% block full_width %}
+
+<div class="w-full h-[33vh] overflow-hidden">
+    <img src="/static/images/about_hero.png" alt="Hansard Analyzer" class="w-full h-full object-cover">
+</div>
+
+{% endblock %}
 
 {% block content %}
 
 <!-- Header -->
-<div class="mb-8">
-    <h1 class="font-serif text-3xl sm:text-4xl font-semibold text-gray-900 mb-2">Members of Parliament</h1>
-    <p class="text-gray-500 text-lg">{{ members|length }} representatives in the 13th Parliament</p>
+<div class="mb-10">
+    <h1 class="font-serif text-4xl sm:text-5xl font-black text-gray-900 tracking-wide mb-2">
+        Members of Parliament
+    </h1>
+    <div class="h-1 w-20 bg-green-500 mb-4"></div>
+    <p class="text-gray-500 text-lg font-semibold tracking-wide">
+        {{ members|length }} representatives in the 13th Parliament
+    </p>
 </div>
 
 <!-- Filter -->
-<div class="mb-6">
+<div class="mb-8">
     <input
-        type="text"
-        id="mpFilter"
-        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-100 focus:border-green-500 outline-none transition-all placeholder-gray-400"
+        type="text" id="mpFilter"
+        class="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm
+               focus:ring-2 focus:ring-green-100 focus:border-green-500
+               outline-none transition-all placeholder-gray-400"
         placeholder="Search by name, constituency or party…"
         onkeyup="filterTable()"
     />
     <p class="text-xs text-gray-400 mt-2">
         Filter applies to this page only. Use
-        <a href="/search/" class="underline">Search</a> for full results.
+        <a href="/search/" class="underline hover:text-green-600 transition-colors">Search</a>
+        for full results.
     </p>
 </div>
 
 {% if members %}
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="mpGrid">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="mpGrid">
     {% for member in members %}
     <a href="{{ url_for('members.mp_scorecard', member_id=member.id) }}"
-       class="member-card group border border-gray-200 rounded-xl p-5 bg-white hover:border-green-400 hover:shadow-lg hover:scale-105 transition-all duration-200 text-left">
+       class="member-card group border border-gray-200 rounded-2xl p-6 bg-white
+              hover:border-green-400 hover:shadow-xl hover:-translate-y-1
+              transition-all duration-300 flex flex-col">
+
         <div class="flex items-start justify-between mb-3">
             <div class="flex-1">
-                <div class="font-serif font-semibold text-gray-900 mb-1 group-hover:text-green-600 transition-colors">{{ member.name }}</div>
-                <div class="text-xs text-gray-500 font-medium">{{ member.constituency or '—' }}</div>
+                <div class="font-serif font-bold text-gray-900 mb-1 text-lg
+                            group-hover:text-green-700 transition-colors">
+                    {{ member.name }}
+                </div>
+                <div class="text-xs text-gray-500 font-medium tracking-wide">
+                    {{ member.constituency or '—' }}
+                </div>
             </div>
-            <div class="text-2xl opacity-0 group-hover:opacity-100 transition-opacity"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path fill="rgb(19, 22, 96)" d="M320 312C386.3 312 440 258.3 440 192C440 125.7 386.3 72 320 72C253.7 72 200 125.7 200 192C200 258.3 253.7 312 320 312zM290.3 368C191.8 368 112 447.8 112 546.3C112 562.7 125.3 576 141.7 576L498.3 576C514.7 576 528 562.7 528 546.3C528 447.8 448.2 368 349.7 368L290.3 368z"/></svg></div>
         </div>
-        <div class="flex items-center gap-2 flex-wrap mb-4">
-            <span class="inline-block px-2.5 py-1 bg-green-50 border border-green-200 text-green-700 text-xs font-medium rounded-full">
+
+        <div class="mb-4">
+            <span class="inline-block px-3 py-1 bg-green-50 border border-green-200
+                         text-green-700 text-xs font-medium rounded-full">
                 {{ member.party or '—' }}
             </span>
         </div>
-        <div class="grid grid-cols-2 gap-3 text-sm">
+
+        <div class="grid grid-cols-2 gap-3 text-sm mb-5">
             <div>
-                <div class="text-base font-semibold text-gray-900">{{ member.speech_count or 0 }}</div>
+                <div class="font-serif text-xl font-semibold text-gray-900">
+                    {{ member.speech_count or 0 }}
+                </div>
                 <div class="text-xs text-gray-500">Speeches</div>
             </div>
             <div>
-                <div class="text-base font-semibold text-gray-900">{{ "{:,}".format(member.word_count or 0) }}</div>
+                <div class="font-serif text-xl font-semibold text-gray-900">
+                    {{ "{:,}".format(member.word_count or 0) }}
+                </div>
                 <div class="text-xs text-gray-500">Words</div>
             </div>
         </div>
-        <div class="mt-4 text-green-600 text-sm font-medium group-hover:text-green-700 group-hover:underline transition-all">
+
+        <div class="mt-auto text-green-600 text-sm font-medium
+                    group-hover:text-green-700 group-hover:underline transition-all">
             View record →
         </div>
     </a>
@@ -62,9 +92,14 @@
 {% set p = pagination %}
 {% set extra_params = '' %}
 {% include 'pagination.html' %}
+
 {% else %}
-<div class="border border-gray-200 rounded-xl p-6 bg-gray-50 text-center">
-    <p class="text-gray-600 text-sm">No members in the database yet. Run <code class="bg-gray-200 px-2 py-1 rounded text-xs">flask sync</code> to ingest Hansard data.</p>
+<div class="border border-gray-200 rounded-2xl p-10 bg-gray-50 text-center">
+    <p class="text-gray-600">
+        No members in the database yet. Run
+        <code class="bg-gray-200 px-2 py-1 rounded text-xs">flask sync</code>
+        to ingest Hansard data.
+    </p>
 </div>
 {% endif %}
 
@@ -74,10 +109,8 @@
 <script>
 function filterTable() {
     const input = document.getElementById("mpFilter").value.toLowerCase();
-    const cards = document.querySelectorAll(".member-card");
-    cards.forEach(card => {
-        const text = card.textContent.toLowerCase();
-        card.style.display = text.includes(input) ? "" : "none";
+    document.querySelectorAll(".member-card").forEach(card => {
+        card.style.display = card.textContent.toLowerCase().includes(input) ? "" : "none";
     });
 }
 </script>
