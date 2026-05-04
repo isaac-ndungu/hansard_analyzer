@@ -58,17 +58,30 @@ The application is structured around four main content areas:
     ```bash
     cd hansard_analyzer
     ```
-3.  **Install dependencies**
+3. **Create and activate a virtual environment**
+    - On Windows:
+    ```bash
+    python -m venv env
+    source env\Scripts\activate
+    ```
+    - On macOS/Linux
+    ```
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+
+
+4.  **Install dependencies**
     ```bash
     pip install -r requirements.txt
     ```
-4.  **Set up environment variables**
+5.  **Set up environment variables**
     Create a `.env` file and add your `GEMINI_API_KEY`.
-5.  **Run the application**
+6.  **Run the application**
     ```bash
     python app.py
     ```
-6.  **Access the platform**
+7.  **Access the platform**
     Open `http://127.0.0.1:5000` in your web browser.
 
 ## Screenshots
