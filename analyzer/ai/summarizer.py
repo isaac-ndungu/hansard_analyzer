@@ -359,3 +359,118 @@ def summarize_mp(member_id: int, db_path: str) -> str:
     except Exception as e:
         logger.error(f"Error generating MP summary: {e}")
         return "Summary could not be generated."
+
+
+def summarize_agenda_item(agenda_item_id: int, db_path: str) -> str:
+    """
+    Generates a summary of a specific agenda item.
+    
+    Args:
+        agenda_item_id: The ID of the agenda item to summarize
+        db_path: Path to the SQLite database
+        
+    Returns:
+        A summary string or fallback message if generation fails
+    """
+    client = _get_client()
+    if not client:
+        return "Summary could not be generated — API key not configured."
+    
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Fetch agenda item metadata
+        cursor.execute(
+            "SELECT title, type, session_id FROM agenda_items WHERE id = ?",
+            (agenda_item_id,)
+        )
+        item_row = cursor.fetchone()
+        
+        if not item_row:
+            conn.close()
+            return "Summary could not be generated."
+        
+        title = item_row["title"]
+        item_type = item_row["type"]
+        session_id = item_row["session_id"]
+        
+        # Fetch session date
+        cursor.execute("SELECT date FROM sessions WHERE id = ?", (session_id,))
+        session_row = cursor.fetchone()
+        date = session_row["date"] if session_row else "Unknown Date"
+        
+        # Fetch speeches for this agenda item
+        cursor.execute("""
+            SELECT s.content, m.name, m.constituency, m.party
+            FROM speeches s
+            JOIN members m ON s.member_id = m.id
+            WHERE s.agenda_item_id = ?
+            ORDER BY s.id
+            LIMIT 30
+        """, (agenda_item_id,))
+        
+        speeches = cursor.fetchall()
+        conn.close()
+        
+        if not speeches:
+            return "No speeches found for this agenda item."
+        
+        # Build speeches text
+        speeches_text = ""
+        for speech in speeches:
+            name = speech["name"]
+            constituency = speech["constituency"]
+            party = speech["party"]
+            content = speech["content"][:500] if speech["content"] else ""
+            
+            speeches_text += f"{name} ({constituency}, {party}):\n{content}\n\n"
+        
+        # Build the prompt
+        prompt = f"""You are a parliamentary analyst for Kenya's National Assembly.
+
+        Below is a transcript of a debate on a {item_type} titled: "{title}".
+        This took place on {date}.
+
+        Here are the key contributions from this debate:
+
+        {speeches_text}
+
+        Write a clear, factual 2-paragraph summary of this specific agenda item for a Kenyan citizen.
+        Explain what the main arguments were, what concerns were raised, and what the general consensus or outcome seemed to be.
+        Use plain language. prose only."""
+        
+        # Try with full content first
+        try:
+            return _call_gemini(client, prompt)
+        except genai_errors.ClientError:
+            # Retry with reduced content
+            logger.info("Retrying agenda item summary with reduced content.")
+            speeches_text = ""
+            for speech in speeches[:15]:
+                name = speech["name"]
+                constituency = speech["constituency"]
+                party = speech["party"]
+                content = speech["content"][:300] if speech["content"] else ""
+                speeches_text += f"{name} ({constituency}, {party}):\n{content}\n\n"
+            
+            reduced_prompt = f"""You are a parliamentary analyst for Kenya's National Assembly.
+
+            Below is a transcript of a debate on a {item_type} titled: "{title}".
+            This took place on {date}.
+
+            Here are the key contributions from this debate:
+
+            {speeches_text}
+
+            Write a clear, factual 2-paragraph summary of this specific agenda item for a Kenyan citizen.
+            Explain what the main arguments were, what concerns were raised, and what the general consensus or outcome seemed to be.
+            Use plain language. prose only."""
+            
+            return _call_gemini(client, reduced_prompt)
+    
+    except Exception as e:
+        logger.error(f"Error generating agenda item summary: {e}")
+        return "Summary could not be generated."
+
